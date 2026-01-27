@@ -1,0 +1,8 @@
+from pathlib import Path
+from {{action_dot_path}}.command import {{action_camel}}{{action_method_capitalize}}
+
+ACTION_DIR = Path(__file__).parent
+TEMPLATES_DIR = ACTION_DIR / "templates"
+
+def handle({{action_method}}: {{action_camel}}{{action_method_capitalize}}):
+  raise NotImplementedError("{{action_camel}}{{action_method_capitalize}} handler is not implemented yet.")
