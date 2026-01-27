@@ -17,6 +17,14 @@ eval "$(scaf my-domain)"
 # my-domain.deploy-remote-server='scaf path/to/deploy'
 ```
 
+```bash
+# Generate aliases for scaf's own actions
+eval "$(scaf --self)"
+
+# Or use the explicit path if needed
+eval "$(scaf /home/lucid/.virtualenv/lib/python3.11/site-packages/scaf)""
+```
+
 ## Development
 
 ```bash

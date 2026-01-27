@@ -13,6 +13,24 @@ from scaf.output import print_error
 from scaf.tools import find_available_actions, to_slug_case
 
 
+def get_scaf_package_path() -> Path:
+  """Get the path to the installed scaf package."""
+  import scaf
+
+  scaf_module_path = Path(scaf.__file__).parent
+  return scaf_module_path
+
+
+def resolve_work_folder_path(work_folder_arg: str) -> Path:
+  """Resolve work folder argument, handling special cases for scaf's own actions."""
+
+  # Find scaf's own actions
+  if not work_folder_arg:
+    return get_scaf_package_path()
+
+  return ensure_absolute_path(work_folder_arg)
+
+
 def handle_action_package(folder: Path, action_args: list, show_help: bool = False):
   domain_action = LoadActionPackage(folder).execute()
   description = domain_action.init_module.__doc__ or "No comment."
@@ -157,22 +175,24 @@ def main(argv=None):
     add_help=False,  # We'll handle help manually
     prog="scaf",
   )
-  parser.add_argument("work_folder", nargs="?", default="", help="Path to a domain directory.")
+  parser.add_argument(
+    "work_folder",
+    nargs="?",
+    default="",
+    help="Path to a domain directory. Use '--self' to load scaf's own actions.",
+  )
   parser.add_argument("-h", "--help", action="store_true", help="Show help message and exit.")
   args, remaining = parser.parse_known_args(argv)
 
   # Show base help if no work_folder is provided
-  if not args.work_folder:
-    if args.help:
-      parser.print_help()
-    else:
-      parser.print_usage()
+  if not args.work_folder and args.help:
+    parser.print_help()
     return
 
   config.set_root_dir(os.getcwd())
 
   try:
-    work_folder = ensure_absolute_path(args.work_folder)
+    work_folder = resolve_work_folder_path(args.work_folder)
     if not work_folder.exists():
       raise RuntimeError(f"Work folder does not exist: {work_folder.as_posix()}")
     if is_action_package(work_folder):
