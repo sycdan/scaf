@@ -22,7 +22,7 @@ dev = ["pytest~=9.0", "pytest-cov~=6.0", "ruff~=0.9"]
 scaf = "scaf.cli:main"
 
 [tool.setuptools]
-packages = ["scaf"]
+packages = { find = { include = ["scaf*"] } }
 
 [tool.setuptools.dynamic]
 version = { attr = "scaf.__version__" }
