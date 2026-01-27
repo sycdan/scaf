@@ -1,0 +1,16 @@
+# IDE files.
+.vscode/
+
+# Environment files.
+.env
+
+# Generated files.
+__pycache__/
+*.egg-info/
+.coverage
+.temp/
+*_pb2.py
+*_pb2.pyi
+gen/
+htmlcov/
+scaf.venvrc

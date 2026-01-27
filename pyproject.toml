@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scaf"
+dynamic = ["version"]
+description = "Scaffolding tool & application framework for Python projects."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = ["Jinja2~=3.1", "protobuf~=6.33"]
+
+[project.optional-dependencies]
+dev = ["pytest~=9.0", "pytest-cov~=6.0", "ruff~=0.9"]
+
+[project.scripts]
+scaf = "scaf.cli:main"
+
+[tool.setuptools]
+packages = { find = { include = ["scaf*"] } }
+
+[tool.setuptools.dynamic]
+version = { attr = "scaf.__version__" }
+
+[tool.pytest.ini_options]
+markers = [
+  "integration: marks tests as integration tests (may require external dependencies)",
+]
+testpaths = ["scaf/tests", "example/tests"]
+norecursedirs = ["__pycache__"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+indent-width = 2
+line-length = 99

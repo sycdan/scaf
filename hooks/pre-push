@@ -1,0 +1,188 @@
+#!/usr/bin/env python
+"""
+Ensures git tree is clean, runs tests, and updates version.
+"""
+
+import os
+import re
+import shlex
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def run_command(cmd, description):
+  """Run a shell command and return success status."""
+  try:
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+      print(f"❌ {description} failed:")
+      print(f"Command: {cmd}")
+      print(f"Error: {result.stderr}")
+      print(f"Output: {result.stdout}")
+      return False
+    return True
+  except Exception as e:
+    print(f"❌ {description} failed with exception: {e}")
+    return False
+
+
+def working_directory_clean():
+  print("🔍 Checking git status...")
+  result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
+
+  if result.returncode != 0:
+    print("❌ Failed to check git status")
+    return False
+
+  if result.stdout.strip():
+    print("❌ Git working directory is not clean:")
+    print(result.stdout)
+    print("Please commit or stash your changes before pushing.")
+    return False
+
+  print("✅ Git working directory is clean")
+  return True
+
+
+def tests_pass():
+  """Run all tests using pytest."""
+  print("🧪 Running tests...")
+  return run_command("python -m pytest", "Tests")
+
+
+def ruff_check():
+  """Run ruff linting and formatting checks."""
+  print("🧹 Running ruff checks...")
+
+  print("🔧 Auto-fixing ruff issues...")
+  subprocess.run(["python", "-m", "ruff", "check", "--fix", "."], capture_output=True, text=True)
+  subprocess.run(["python", "-m", "ruff", "format", "."], capture_output=True, text=True)
+
+  # Check if any files were modified by ruff
+  git_status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
+  if git_status.stdout.strip():
+    print("✅ Auto-fixed ruff issues, committing changes...")
+    subprocess.run(["git", "add", "."], check=True)
+    subprocess.run(["git", "commit", "-m", "Auto-fix ruff linting issues"], check=True)
+
+  # Now run the final check
+  if not run_command("python -m ruff check .", "Ruff linting"):
+    return False
+  return run_command("python -m ruff format --check .", "Ruff formatting")
+
+
+def update_version():
+  """Update version in scaf/__init__.py with current date format."""
+  print("📝 Updating version...")
+
+  # Get current date in YYYY.MM.DD format
+  now = datetime.now(timezone.utc)
+  date_version = now.strftime("%Y.%m.%d")
+
+  # Find build number by checking if version already exists today
+  init_file = Path("scaf/__init__.py")
+
+  if not init_file.exists():
+    print("❌ scaf/__init__.py not found")
+    return False
+
+  # Read current version
+  with open(init_file, "r") as f:
+    content = f.read()
+  version_match = re.search(r'__version__ = ["\']([^"\']+)["\']', content)
+  build_num = 1
+  if version_match:
+    current_version = version_match.group(1)
+    # Check if it's already today's date
+    if current_version.startswith(date_version):
+      # Extract build number and increment
+      if "." in current_version[len(date_version) :]:
+        build_num = int(current_version.split(".")[-1]) + 1
+
+  new_version = f"{date_version}.{build_num:04d}"
+
+  # Update version in file
+  new_content = re.sub(
+    r'__version__ = ["\'][^"\']+["\']', f'__version__ = "{new_version}"', content
+  )
+
+  with open(init_file, "w") as f:
+    f.write(new_content)
+
+  run_command("git add scaf/__init__.py", "Staging version update")
+  run_command(f"git commit -m {shlex.quote(new_version)}", "Committing version update")
+
+  print(f"✅ Version updated to {new_version}")
+  return True
+
+
+def pushing_to_main():
+  """git sends: <local_ref> <local_sha> <remote_ref> <remote_sha>"""
+  lines = sys.stdin.read().strip().splitlines()
+  for line in lines:
+    if not line.strip():
+      continue
+
+    parts = line.split()
+    if len(parts) < 4:
+      continue
+
+    remote_ref = parts[2]
+
+    if remote_ref.endswith("/main"):
+      return True
+  return False
+
+
+def has_new_commits():
+  """Check if there are new commits to push to origin/main."""
+  result = subprocess.run(
+    ["git", "rev-list", "--count", "origin/main..HEAD"], 
+    capture_output=True, text=True
+  )
+  if result.returncode == 0:
+    count = int(result.stdout.strip())
+    print(f"📊 Found {count} new commits to push")
+    return count > 0
+  
+  # Fallback: if origin/main doesn't exist, assume we have new commits
+  print("ℹ️  Cannot determine commit count, assuming new commits exist")
+  return True
+
+
+def main():
+  print("🚀 Running pre-push hook...")
+
+  # Change to repository root
+  repo_root = subprocess.run(
+    ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True
+  )
+  if repo_root.returncode == 0:
+    os.chdir(repo_root.stdout.strip())
+
+  if not working_directory_clean():
+    sys.exit(1)
+
+  if not ruff_check():
+    sys.exit(1)
+
+  if not tests_pass():
+    sys.exit(1)
+
+  # Only update version when pushing to main AND there are new commits
+  if pushing_to_main() and has_new_commits():
+    if not update_version():
+      sys.exit(1)
+  else:
+    if pushing_to_main():
+      print("ℹ️  No new commits to push - skipping version update")
+    else:
+      print("ℹ️  Not pushing to main - skipping version update")
+
+  print("✅ All pre-push checks passed!")
+
+
+if __name__ == "__main__":
+  main()
