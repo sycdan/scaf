@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from jinja2 import Template
@@ -90,7 +91,8 @@ def ensure_shape_module(action_dir: Path, action_method: str):
 
 
 def handle(command: CreateAction) -> ActionPackage:
-  action_dir = (config.ROOT_DIR / command.action_path).resolve()
+  config.set_root_dir(os.getcwd())
+  action_dir = config.ROOT_DIR / command.action_path
   action_dir.mkdir(parents=True, exist_ok=True)
 
   # Ensure all parents up to ROOT_DIR are packages
@@ -102,4 +104,4 @@ def handle(command: CreateAction) -> ActionPackage:
   ensure_shape_module(action_dir, command.action_method)
   ensure_logic_module(action_dir, command.action_method)
 
-  return LoadActionPackage(action_dir).execute()
+  return LoadActionPackage(config.ROOT_DIR, action_dir).execute()
