@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from scaf.builder.create_action.rules import fit_action_method, fit_action_path, fit_description
+from scaf.user.create_action.rules import fit_action_method, fit_action_path, fit_description
 
 
 @dataclass

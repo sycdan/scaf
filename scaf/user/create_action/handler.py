@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from jinja2 import Template
-from scaf.builder.create_action.command import CreateAction
+from scaf.user.create_action.command import CreateAction
 
 from scaf import config
 from scaf.alias.entity import Alias
