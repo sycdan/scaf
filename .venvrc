@@ -1,2 +1,2 @@
-eval "$(scaf scaf)"
+eval "$(scaf)"
 alias | grep ' scaf.'
