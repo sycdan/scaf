@@ -23,6 +23,7 @@ scaf = "scaf.cli:main"
 
 [tool.setuptools]
 packages = { find = { include = ["scaf*"] } }
+include-package-data = true
 
 [tool.setuptools.dynamic]
 version = { attr = "scaf.__version__" }
