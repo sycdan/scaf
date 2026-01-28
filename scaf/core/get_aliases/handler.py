@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from scaf.action_package.rules import must_contain_required_files
+from scaf.alias.entity import Alias
 from scaf.core.get_aliases.query import GetAliases
 from scaf.output import print_error
 from scaf.tools import to_slug_case
@@ -22,7 +23,7 @@ def find_available_actions(domain_folder: Path) -> list[str]:
   return sorted(actions)
 
 
-def generate_action_aliases(root: Path, action_paths: list[str]) -> list[str]:
+def generate_action_aliases(root: Path, action_paths: list[str]) -> list[Alias]:
   work_folder_name = root.name
   aliases = []
 
@@ -44,8 +45,7 @@ def generate_action_aliases(root: Path, action_paths: list[str]) -> list[str]:
     if len(paths) == 1:
       # No conflict, use base alias
       action_path = paths[0]
-      scaf_command = f"scaf {root.as_posix()} --call {action_path}"
-      final_aliases[base_alias] = scaf_command
+      final_aliases[base_alias] = action_path
     else:
       # Conflict, need to deduplicate by adding parent folders
       # Find minimum depth needed to make all paths unique
@@ -78,13 +78,11 @@ def generate_action_aliases(root: Path, action_paths: list[str]) -> list[str]:
         if all_unique:
           # Found a depth that makes all aliases unique
           for alias_name, action_path in candidates.items():
-            scaf_command = f"scaf {root.as_posix()} --call {action_path}"
-            final_aliases[alias_name] = scaf_command
+            final_aliases[alias_name] = action_path
           break
 
-  # Generate bash alias statements
-  for alias_name, command in sorted(final_aliases.items()):
-    aliases.append(f"alias {alias_name}='{command} --'")
+  for alias_name, action_path in sorted(final_aliases.items()):
+    aliases.append(Alias(name=alias_name, root=root, action=Path(action_path)))
 
   return aliases
 
@@ -101,6 +99,9 @@ def handle_domain_capability(folder: Path):
     print(alias)
 
 
-def handle(command: GetAliases) -> list[str]:
+def handle(command: GetAliases) -> list[Alias]:
   actions = find_available_actions(command.root)
-  return generate_action_aliases(command.root, actions)
+  aliases = generate_action_aliases(command.root, actions)
+  if command.filter:
+    aliases = [a for a in aliases if a.action.as_posix().startswith(command.filter)]
+  return aliases
