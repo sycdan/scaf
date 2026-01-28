@@ -10,3 +10,8 @@ class GetAliases:
     self.root = Path(self.root)
     if not self.root.is_absolute():
       raise ValueError("root must be absolute")
+
+  def execute(self):
+    from scaf.core.get_aliases.handler import handle
+
+    return handle(self)
