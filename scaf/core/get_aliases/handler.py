@@ -1,3 +1,5 @@
+"""Constructs bash aliases for action packages in a domain/capability."""
+
 import os
 from pathlib import Path
 
@@ -9,20 +11,19 @@ from scaf.tools import to_slug_case
 
 def find_available_actions(domain_folder: Path) -> list[str]:
   actions = []
-  for root, dirs, files in os.walk(domain_folder, topdown=True):
+  for base, dirs, files in os.walk(domain_folder):
     # Skip hidden directories and __pycache__ etc.
     dirs[:] = [d for d in dirs if not d.startswith(".") and not d.startswith("_")]
     try:
       must_contain_required_files(files)
-      actions.append(Path(root).relative_to(domain_folder).as_posix())
+      actions.append(Path(base).relative_to(domain_folder).as_posix())
     except ValueError:
       continue
   return sorted(actions)
 
 
-def generate_action_aliases(tld_folder: Path, action_paths: list[str]) -> list[str]:
-  """Generate bash aliases for action packages with deduplication."""
-  work_folder_name = tld_folder.name
+def generate_action_aliases(root: Path, action_paths: list[str]) -> list[str]:
+  work_folder_name = root.name
   aliases = []
 
   # Create initial alias mappings
@@ -43,7 +44,7 @@ def generate_action_aliases(tld_folder: Path, action_paths: list[str]) -> list[s
     if len(paths) == 1:
       # No conflict, use base alias
       action_path = paths[0]
-      scaf_command = f"scaf {(tld_folder / action_path).as_posix()}"
+      scaf_command = f"scaf {(root / action_path).as_posix()}"
       final_aliases[base_alias] = scaf_command
     else:
       # Conflict, need to deduplicate by adding parent folders
@@ -77,7 +78,7 @@ def generate_action_aliases(tld_folder: Path, action_paths: list[str]) -> list[s
         if all_unique:
           # Found a depth that makes all aliases unique
           for alias_name, action_path in candidates.items():
-            scaf_command = f"scaf {(tld_folder / action_path).as_posix()}"
+            scaf_command = f"scaf {(root / action_path).as_posix()}"
             final_aliases[alias_name] = scaf_command
           break
 
