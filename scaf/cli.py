@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from pathlib import Path
 from pprint import pprint
 
@@ -16,7 +17,17 @@ def ensure_absolute_path(path: Path | str) -> Path:
   return path
 
 
+def split_argv(argv: list[str]) -> tuple[list[str], list[str]]:
+  """manually stop grabbing scaf args at the first "--" since argparse doesn't do it how we need"""
+  if "--" in argv:
+    index = argv.index("--")
+    remaining = argv[index + 1 :]
+    return argv[1:index], remaining
+  return argv[1:], []
+
+
 def main(argv=None):
+  argv, remaining = split_argv(list(argv or sys.argv))
   parser = argparse.ArgumentParser(
     description="Discover actions within a domain, or execute an action.",
     prog="scaf",
@@ -32,9 +43,7 @@ def main(argv=None):
     default="",
     help="Execute the domain action at this path. Additional args are passed to the action.",
   )
-  args, remaining = parser.parse_known_args(argv)
-  if remaining and remaining[0] == "--":
-    remaining = remaining[1:]
+  args = parser.parse_args(argv)
 
   try:
     if args.domain:

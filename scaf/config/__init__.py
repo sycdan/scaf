@@ -10,6 +10,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 def set_root_dir(path: Path | str):
   global ROOT_DIR
   ROOT_DIR = Path(path)
-  sys.path.insert(0, str(ROOT_DIR))
+  if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
   if DEBUG:
     print(f"{ROOT_DIR=}", file=sys.stderr)
