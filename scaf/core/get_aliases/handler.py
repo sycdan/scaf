@@ -44,7 +44,7 @@ def generate_action_aliases(root: Path, action_paths: list[str]) -> list[str]:
     if len(paths) == 1:
       # No conflict, use base alias
       action_path = paths[0]
-      scaf_command = f"scaf {(root / action_path).as_posix()}"
+      scaf_command = f"scaf --call {(root / action_path).as_posix()}"
       final_aliases[base_alias] = scaf_command
     else:
       # Conflict, need to deduplicate by adding parent folders
@@ -78,13 +78,13 @@ def generate_action_aliases(root: Path, action_paths: list[str]) -> list[str]:
         if all_unique:
           # Found a depth that makes all aliases unique
           for alias_name, action_path in candidates.items():
-            scaf_command = f"scaf {(root / action_path).as_posix()}"
+            scaf_command = f"scaf --call {(root / action_path).as_posix()}"
             final_aliases[alias_name] = scaf_command
           break
 
   # Generate bash alias statements
   for alias_name, command in sorted(final_aliases.items()):
-    aliases.append(f"alias {alias_name}='{command}'")
+    aliases.append(f"alias {alias_name}='{command} --'")
 
   return aliases
 
