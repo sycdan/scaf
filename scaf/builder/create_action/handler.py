@@ -4,7 +4,7 @@ from jinja2 import Template
 
 from scaf import config
 from scaf.action_package.entity import ActionPackage
-from scaf.action_package.load.query import LoadActionPackage
+from scaf.action_package.load.command import LoadActionPackage
 from scaf.builder.create_action.command import CreateAction
 from scaf.tools import to_camel_case, to_dot_path
 
