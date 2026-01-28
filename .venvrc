@@ -1,0 +1,2 @@
+eval "$(scaf scaf)"
+alias | grep ' scaf.'
