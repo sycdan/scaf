@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Ensures git tree is clean, runs tests, and updates version.
+Ensures git tree is clean, runs tests, and checks version when pushing to main.
 """
 
 import os
@@ -69,16 +69,20 @@ def ruff_check():
   return run_command("python -m ruff format --check .", "Ruff formatting")
 
 
-def update_version():
-  """Update version using the dev.bump_version action."""
+def check_version_bump_needed():
+  """Check if a version bump is needed when pushing to main."""
   from dev.bump_version.command import BumpVersion
-  from dev.bump_version.handler import handle
 
   try:
-    handle(BumpVersion())
+    result = BumpVersion(dry_run=True).execute()
+    if result == "NEEDS_BUMP":
+      print("❌ Version bump is required before pushing to main")
+      print("💡 Run dev.bump-version")
+      return False
+    print(f"✅ Version is up to date: {result}")
     return True
   except Exception as e:
-    print(f"❌ Version update failed: {e}")
+    print(f"❌ Version check failed: {e}")
     return False
 
 
@@ -134,15 +138,13 @@ def main():
   if not tests_pass():
     sys.exit(1)
 
-  # Only update version when pushing to main AND there are new commits
   if pushing_to_main() and has_new_commits():
-    if not update_version():
+    if not check_version_bump_needed():
       sys.exit(1)
+  elif pushing_to_main():
+    print("ℹ️  No new commits to push - skipping version check")
   else:
-    if pushing_to_main():
-      print("ℹ️  No new commits to push - skipping version update")
-    else:
-      print("ℹ️  Not pushing to main - skipping version update")
+    print("ℹ️  Not pushing to main - skipping version check")
 
   print("✅ All pre-push checks passed!")
 

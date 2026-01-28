@@ -27,6 +27,7 @@ def handle(command: BumpVersion) -> str:
   """Update version in scaf/__init__.py with current date format.
 
   Returns the new version string. Idempotent - skips bump if last commit was a version bump.
+  In dry-run mode, returns 'NEEDS_BUMP' if bump is needed, otherwise returns current version.
   """
   # Check if the last commit was already a version bump
   result = subprocess.run(["git", "log", "-1", "--pretty=%s"], capture_output=True, text=True)
@@ -34,9 +35,17 @@ def handle(command: BumpVersion) -> str:
     last_commit_msg = result.stdout.strip()
     # Check if it matches version format YYYY.MM.DD.NNNN
     if re.match(r"^\d{4}\.\d{2}\.\d{2}\.\d{4}$", last_commit_msg):
+      if command.dry_run:
+        print(f"ℹ️  Last commit was already a version bump: {last_commit_msg}")
+        return last_commit_msg
       print(f"ℹ️  Last commit was already a version bump: {last_commit_msg}")
       print("✅ Skipping version update")
       return last_commit_msg
+
+  # If we get here, a bump is needed
+  if command.dry_run:
+    print("⚠️  Version bump is needed")
+    return "NEEDS_BUMP"
 
   print("📝 Updating version...")
 

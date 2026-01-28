@@ -8,4 +8,10 @@ class BumpVersion:
   Automatically increments build number for same-day versions.
   """
 
-  pass
+  dry_run: bool = False
+  """If True, check if version bump is needed without actually doing it."""
+
+  def execute(self) -> str:
+    from dev.bump_version.handler import handle
+
+    return handle(self)
