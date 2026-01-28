@@ -79,3 +79,7 @@ source dev/env.sh [--nuke]
 
 - But `eval` is **evil**!
   - That's not a question.
+- I tried to run `xyz.foo` and got `ModuleNotFoundError: No module named 'xyz'`, help!
+  - Also not a question, but try this:
+    - `export PYTHONPATH=.`
+    - `xyz.foo`
