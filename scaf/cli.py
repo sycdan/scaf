@@ -33,6 +33,8 @@ def main(argv=None):
     help="Execute the domain action at this path. Additional args are passed to the action.",
   )
   args, remaining = parser.parse_known_args(argv)
+  if remaining and remaining[0] == "--":
+    remaining = remaining[1:]
 
   try:
     if args.domain:
