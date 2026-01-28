@@ -1,10 +1,13 @@
+import logging
 import re
 import shlex
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from bump_version.command import BumpVersion
+from dev.bump_version.command import BumpVersion
+
+logger = logging.getLogger(__name__)
 
 
 def run_command(cmd, description):
@@ -12,14 +15,14 @@ def run_command(cmd, description):
   try:
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     if result.returncode != 0:
-      print(f"❌ {description} failed:")
-      print(f"Command: {cmd}")
-      print(f"Error: {result.stderr}")
-      print(f"Output: {result.stdout}")
+      logger.error(f"❌ {description} failed:")
+      logger.error(f"Command: {cmd}")
+      logger.error(f"Error: {result.stderr}")
+      logger.error(f"Output: {result.stdout}")
       return False
     return True
   except Exception as e:
-    print(f"❌ {description} failed with exception: {e}")
+    logger.error(f"{description} failed with exception: {e}")
     return False
 
 
@@ -27,27 +30,12 @@ def handle(command: BumpVersion) -> str:
   """Update version in scaf/__init__.py with current date format.
 
   Returns the new version string. Idempotent - skips bump if last commit was a version bump.
-  In dry-run mode, returns 'NEEDS_BUMP' if bump is needed, otherwise returns current version.
   """
-  # Check if the last commit was already a version bump
-  result = subprocess.run(["git", "log", "-1", "--pretty=%s"], capture_output=True, text=True)
-  if result.returncode == 0:
-    last_commit_msg = result.stdout.strip()
-    # Check if it matches version format YYYY.MM.DD.NNNN
-    if re.match(r"^\d{4}\.\d{2}\.\d{2}\.\d{4}$", last_commit_msg):
-      if command.dry_run:
-        print(f"ℹ️  Last commit was already a version bump: {last_commit_msg}")
-        return last_commit_msg
-      print(f"ℹ️  Last commit was already a version bump: {last_commit_msg}")
-      print("✅ Skipping version update")
-      return last_commit_msg
+  from dev.check.is_version_bump_needed.query import IsVersionBumpNeeded
 
-  # If we get here, a bump is needed
-  if command.dry_run:
-    print("⚠️  Version bump is needed")
-    return "NEEDS_BUMP"
-
-  print("📝 Updating version...")
+  if not IsVersionBumpNeeded(remote_ref="refs/heads/main").execute():
+    logger.info("Version bump is not needed")
+    return ""
 
   # Get current date in YYYY.MM.DD format
   now = datetime.now(timezone.utc)

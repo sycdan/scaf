@@ -2,7 +2,7 @@
 
 **Note:** Ignore commented lines (surrounded by <!-- -->).
 
-<!-- ## Bug reported by the client -->
+<!-- ## Bug reported by user -->
 
 <!-- ## Goals
 

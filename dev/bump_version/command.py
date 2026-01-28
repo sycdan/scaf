@@ -6,10 +6,8 @@ class BumpVersion:
   """Command to bump the app version using YYYY.MM.DD.NNNN format.
 
   Automatically increments build number for same-day versions.
+  Idempotent - skips if last commit is already a version bump.
   """
-
-  dry_run: bool = False
-  """If True, check if version bump is needed without actually doing it."""
 
   def execute(self) -> str:
     from dev.bump_version.handler import handle

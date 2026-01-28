@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import sys
 from pathlib import Path
@@ -26,6 +27,22 @@ def split_argv(argv: list[str]) -> tuple[list[str], list[str]]:
   return argv[1:], []
 
 
+def configure_logging(verbosity: int):
+  level = logging.WARNING  # default
+  if verbosity >= 3:
+    level = logging.DEBUG
+  elif verbosity == 2:
+    level = logging.INFO
+  elif verbosity == 1:
+    level = logging.WARNING
+
+  logging.basicConfig(
+    level=level,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+  )
+
+
 def main(argv=None):
   argv, remaining = split_argv(list(argv or sys.argv))
   parser = argparse.ArgumentParser(
@@ -43,15 +60,23 @@ def main(argv=None):
     default="",
     help="Execute the domain action at this path. Additional args are passed to the action.",
   )
-  args = parser.parse_args(argv)
+  parser.add_argument(
+    "--verbose",
+    "-v",
+    action="count",
+    default=0,
+    help="Enable verbose output.",
+  )
+  args: argparse.Namespace = parser.parse_args(argv)
+  configure_logging(args.verbose)
 
   try:
     if args.domain:
       root = ensure_absolute_path(args.domain)
-      alias_filter = ""
+      action_filter = ""
     else:
-      root = Path(__file__).parent  # scaf's internal domain
-      alias_filter = "user/"
+      root = Path(__file__).parent.parent  # scaf's code root
+      action_filter = "scaf/user"
 
     if not root.exists():
       raise RuntimeError(f"Root does not exist: {root.as_posix()}")
@@ -60,7 +85,7 @@ def main(argv=None):
       action_package = LoadActionPackage(root, args.call).execute()
       pprint(CallAction(action_package, remaining).execute())
     else:
-      for alias in GetAliases(root, filter=alias_filter).execute():
+      for alias in GetAliases(root, filter=action_filter).execute():
         print(alias)
   except (ValueError, RuntimeError) as e:
     print_error(str(e))

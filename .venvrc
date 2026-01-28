@@ -1,2 +1,2 @@
-eval "$(scaf)"
-alias | grep ' scaf.'
+eval "$(scaf .)"
+alias | grep -P ' scaf(?=\.)'

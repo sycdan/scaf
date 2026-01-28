@@ -8,7 +8,7 @@ from scaf.user.create_action.rules import fit_action_method, fit_action_path, fi
 class CreateAction:
   action_path: Path
   """e.g. 'cyberdyne/skynet/defense/fire_nukes`'"""
-  action_method: str
+  action_method: str = field(default="command")
   """e.g. 'command' or 'query'"""
   description: str = field(default="")
   """e.g. 'Initiate the apocalypse.'"""

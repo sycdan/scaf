@@ -21,6 +21,14 @@ python -m venv .venv || {
   return 1
 }
 
+echo "🪜  Patching $ACTIVATE_SCRIPT..."
+cat >> "$ACTIVATE_SCRIPT" <<'EOF'
+# Source .venvrc, if it exists
+if [ -f "$VIRTUAL_ENV/../.venvrc" ]; then
+  . "$VIRTUAL_ENV/../.venvrc"
+fi
+EOF
+
 echo "🪜  Activating virtual environment..."
 . "$ACTIVATE_SCRIPT"
 
@@ -61,9 +69,5 @@ if [ -d ".git" ]; then
 else
   echo "⚠️  Not a git repository - skipping hook setup"
 fi
-
-echo "🪜  Generating aliases..."
-eval "$(scaf scaf)"
-alias | grep ' scaf.'
 
 echo "🎉 Development environment ready!"
