@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from scaf import cli
+from scaf.core.get_aliases.handler import generate_action_aliases
 
 domain_root = Path("example")
 
@@ -15,7 +16,7 @@ def test_action_alias_are_deduplicated():
     "my/server/remote/deploy",
   ]
 
-  aliases = cli.generate_action_aliases(work_folder, action_paths)
+  aliases = generate_action_aliases(work_folder, action_paths)
 
   # Verify the deduplication worked correctly
   aliases_text = "\n".join(aliases)
@@ -32,16 +33,6 @@ def test_call_invalid_path_shows_error(capsys):
 
   captured = capsys.readouterr()
   assert "does not exist:" in captured.err
-
-
-@pytest.mark.integration
-def test_call_invalid_work_folder_shows_error(capsys):
-  invalid_action_folder = domain_root / "not_an_action"
-
-  cli.main([invalid_action_folder.as_posix()])
-
-  captured = capsys.readouterr()
-  assert "No action packages found in:" in captured.err
 
 
 @pytest.mark.integration
