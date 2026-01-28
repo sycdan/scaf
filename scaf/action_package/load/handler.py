@@ -4,10 +4,10 @@ from types import ModuleType
 
 from scaf import config
 from scaf.action_package.entity import ActionPackage
-from scaf.action_package.load.query import LoadActionPackage
+from scaf.action_package.load.command import LoadActionPackage
 from scaf.action_package.rules import must_contain_required_files
 from scaf.output import print_warning
-from scaf.tools import compute_hash, resolve_path
+from scaf.tools import compute_hash
 
 
 def _load_module_from_file(file: Path, hash: str = "") -> ModuleType:
@@ -28,49 +28,51 @@ def _load_module_from_file(file: Path, hash: str = "") -> ModuleType:
   return module
 
 
-def ensure_action_dir(action_path: Path | str) -> Path:
-  action_path = resolve_path(action_path)
-
-  if not action_path.is_relative_to(config.ROOT_DIR):
-    raise RuntimeError(f"Action path is not relative to root: {action_path.as_posix()}")
+def ensure_action_folder(action_path: Path) -> Path:
+  """in case we got a path to a file inside the action package"""
+  if not action_path.is_absolute():
+    raise RuntimeError(f"Action path is not absolute: {action_path.as_posix()}")
 
   if not action_path.exists():
     raise RuntimeError(f"Action path does not exist: {action_path.as_posix()}")
 
-  action_dir = action_path if action_path.is_dir() else action_path.parent
-  return action_dir
+  action_folder = action_path if action_path.is_dir() else action_path.parent
+  return action_folder
 
 
-def load_init_module(action_dir: Path) -> ModuleType:
-  return _load_module_from_file(action_dir / "__init__.py")
+def load_init_module(action_folder: Path) -> ModuleType:
+  return _load_module_from_file(action_folder / "__init__.py")
 
 
-def load_shape_module(action_dir: Path) -> ModuleType:
+def load_shape_module(action_folder: Path) -> ModuleType:
   try:
-    return _load_module_from_file(action_dir / "command.py")
+    return _load_module_from_file(action_folder / "command.py")
   except RuntimeError as e:
     if config.DEBUG:
       print_warning(str(e))
     try:
-      return _load_module_from_file(action_dir / "query.py")
+      return _load_module_from_file(action_folder / "query.py")
     except RuntimeError:
       if config.DEBUG:
         print_warning(str(e))
-      raise RuntimeError(f"Failed to load action shape module from {action_dir.as_posix()}")
+      raise RuntimeError(f"Failed to load action shape module from {action_folder.as_posix()}")
 
 
 def load_logic_module(action_dir: Path) -> ModuleType:
   return _load_module_from_file(action_dir / "handler.py")
 
 
-def handle(query: LoadActionPackage) -> ActionPackage:
-  action_dir = ensure_action_dir(query.action_path)
-  must_contain_required_files([f.name for f in action_dir.iterdir()])
-  init_module = load_init_module(action_dir)
-  shape_module = load_shape_module(action_dir)
-  logic_module = load_logic_module(action_dir)
+def handle(command: LoadActionPackage) -> ActionPackage:
+  action_path = command.root / command.action_folder
+  action_folder = ensure_action_folder(action_path)
+  must_contain_required_files([f.name for f in action_folder.iterdir()])
+  config.set_root_dir(command.root)
+  init_module = load_init_module(action_folder)
+  shape_module = load_shape_module(action_folder)
+  logic_module = load_logic_module(action_folder)
   return ActionPackage(
-    action_dir=action_dir,
+    command.root,
+    action_folder=action_folder,
     init_module=init_module,
     shape_module=shape_module,
     logic_module=logic_module,

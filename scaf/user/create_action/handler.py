@@ -1,11 +1,12 @@
+import os
 from pathlib import Path
 
 from jinja2 import Template
+from scaf.user.create_action.command import CreateAction
 
 from scaf import config
-from scaf.action_package.entity import ActionPackage
-from scaf.action_package.load.query import LoadActionPackage
-from scaf.builder.create_action.command import CreateAction
+from scaf.alias.entity import Alias
+from scaf.core.get_aliases.query import GetAliases
 from scaf.tools import to_camel_case, to_dot_path
 
 ACTION_DIR = Path(__file__).parent
@@ -89,8 +90,9 @@ def ensure_shape_module(action_dir: Path, action_method: str):
   shape_file.write_text(content)
 
 
-def handle(command: CreateAction) -> ActionPackage:
-  action_dir = (config.ROOT_DIR / command.action_path).resolve()
+def handle(command: CreateAction) -> Alias:
+  config.set_root_dir(os.getcwd())
+  action_dir = config.ROOT_DIR / command.action_path
   action_dir.mkdir(parents=True, exist_ok=True)
 
   # Ensure all parents up to ROOT_DIR are packages
@@ -102,4 +104,8 @@ def handle(command: CreateAction) -> ActionPackage:
   ensure_shape_module(action_dir, command.action_method)
   ensure_logic_module(action_dir, command.action_method)
 
-  return LoadActionPackage(action_dir).execute()
+  aliases = GetAliases(config.ROOT_DIR, filter=command.action_path.as_posix()).execute()
+  if not aliases:
+    raise RuntimeError(f"No alias found for created action at {command.action_path.as_posix()}")
+  print("Reactivate your venv to pick up the new alias.")
+  return aliases[0]

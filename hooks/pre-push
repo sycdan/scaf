@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 """
-Ensures git tree is clean, runs tests, and updates version.
+Ensures git tree is clean, runs tests, and checks version when pushing to main.
 """
 
 import os
-import re
-import shlex
 import subprocess
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
 
 
 def run_command(cmd, description):
@@ -73,49 +69,21 @@ def ruff_check():
   return run_command("python -m ruff format --check .", "Ruff formatting")
 
 
-def update_version():
-  """Update version in scaf/__init__.py with current date format."""
-  print("📝 Updating version...")
+def check_version_bump_needed():
+  """Check if a version bump is needed when pushing to main."""
+  from dev.bump_version.command import BumpVersion
 
-  # Get current date in YYYY.MM.DD format
-  now = datetime.now(timezone.utc)
-  date_version = now.strftime("%Y.%m.%d")
-
-  # Find build number by checking if version already exists today
-  init_file = Path("scaf/__init__.py")
-
-  if not init_file.exists():
-    print("❌ scaf/__init__.py not found")
+  try:
+    result = BumpVersion(dry_run=True).execute()
+    if result == "NEEDS_BUMP":
+      print("❌ Version bump is required before pushing to main")
+      print("💡 Run dev.bump-version")
+      return False
+    print(f"✅ Version is up to date: {result}")
+    return True
+  except Exception as e:
+    print(f"❌ Version check failed: {e}")
     return False
-
-  # Read current version
-  with open(init_file, "r") as f:
-    content = f.read()
-  version_match = re.search(r'__version__ = ["\']([^"\']+)["\']', content)
-  build_num = 1
-  if version_match:
-    current_version = version_match.group(1)
-    # Check if it's already today's date
-    if current_version.startswith(date_version):
-      # Extract build number and increment
-      if "." in current_version[len(date_version) :]:
-        build_num = int(current_version.split(".")[-1]) + 1
-
-  new_version = f"{date_version}.{build_num:04d}"
-
-  # Update version in file
-  new_content = re.sub(
-    r'__version__ = ["\'][^"\']+["\']', f'__version__ = "{new_version}"', content
-  )
-
-  with open(init_file, "w") as f:
-    f.write(new_content)
-
-  run_command("git add scaf/__init__.py", "Staging version update")
-  run_command(f"git commit -m {shlex.quote(new_version)}", "Committing version update")
-
-  print(f"✅ Version updated to {new_version}")
-  return True
 
 
 def pushing_to_main():
@@ -139,14 +107,13 @@ def pushing_to_main():
 def has_new_commits():
   """Check if there are new commits to push to origin/main."""
   result = subprocess.run(
-    ["git", "rev-list", "--count", "origin/main..HEAD"], 
-    capture_output=True, text=True
+    ["git", "rev-list", "--count", "origin/main..HEAD"], capture_output=True, text=True
   )
   if result.returncode == 0:
     count = int(result.stdout.strip())
     print(f"📊 Found {count} new commits to push")
     return count > 0
-  
+
   # Fallback: if origin/main doesn't exist, assume we have new commits
   print("ℹ️  Cannot determine commit count, assuming new commits exist")
   return True
@@ -171,15 +138,13 @@ def main():
   if not tests_pass():
     sys.exit(1)
 
-  # Only update version when pushing to main AND there are new commits
   if pushing_to_main() and has_new_commits():
-    if not update_version():
+    if not check_version_bump_needed():
       sys.exit(1)
+  elif pushing_to_main():
+    print("ℹ️  No new commits to push - skipping version check")
   else:
-    if pushing_to_main():
-      print("ℹ️  No new commits to push - skipping version update")
-    else:
-      print("ℹ️  Not pushing to main - skipping version update")
+    print("ℹ️  Not pushing to main - skipping version check")
 
   print("✅ All pre-push checks passed!")
 

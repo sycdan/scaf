@@ -63,15 +63,3 @@ def resolve_path(action_path: Path | str) -> Path:
   if isinstance(action_path, str):
     action_path = Path(action_path)
   return action_path.resolve()
-
-
-def find_available_actions(root_dir: Path) -> list[str]:
-  actions = []
-  for root, dirs, files in os.walk(root_dir):
-    # Skip hidden directories and .venv, etc.
-    dirs[:] = [d for d in dirs if not d.startswith(("."))]
-
-    if "__init__.py" in files and "handler.py" in files:
-      if "command.py" in files or "query.py" in files:
-        actions.append(Path(root).relative_to(root_dir).as_posix())
-  return sorted(actions)

@@ -2,13 +2,15 @@ import os
 import sys
 from pathlib import Path
 
+DEBUG = os.getenv("SCAF_DEBUG", "0") == "1"
 ROOT_DIR = Path(__file__).parent.parent.parent
+"""the level above the working domain folder"""
 
 
 def set_root_dir(path: Path | str):
   global ROOT_DIR
   ROOT_DIR = Path(path)
-  sys.path.insert(0, str(ROOT_DIR))
-
-
-DEBUG = os.getenv("SCAF_DEBUG", "0") == "1"
+  if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+  if DEBUG:
+    print(f"{ROOT_DIR=}", file=sys.stderr)

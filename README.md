@@ -2,28 +2,70 @@
 
 Scaf (straightforward composable application framework) is an opinionated filesystem-based scaffolding system for devs who just want to keep things simple.
 
-Ask an agent to read the docs and the venvrc, then ask it to build what you need.
+## Setup
+
+**Note:** Currently only bash is supported (use WSL or git bash on Windows).
+
+Change to your project root:
+
+```bash
+cd ~/Projects/my-project
+```
+
+Create a venv:
+
+```bash
+python -m venv .venv
+```
+
+Add this to the end of your venv activate script (e.g. `.venv/Scripts/activate`):
+
+```bash
+if [ -f "$VIRTUAL_ENV/"../.venvrc ]; then
+  source "$VIRTUAL_ENV/"../.venvrc
+fi
+```
+
+Create a `.venvrc` file with content like content:
+
+```bash
+# Add project-specific aliases to the shell
+eval "$(scaf .)"
+alias | grep -P ' my-project(?=\.)'
+
+# Add scaf's user aliases to the shell
+eval "$(scaf)"
+alias | grep -P ' scaf(?=\.)'
+```
+
+Install scaf:
+
+```bash
+.venv/Scripts/pip install git+http://github.com/sycdan/scaf
+```
+
+Activate the venv:
+
+```bash
+source .venv/Scripts/activate
+```
+
+Create an action:
+
+```bash
+scaf.create-action dev/do_stuff command
+```
+
+Add the new action alias and call it:
+
+```bash
+eval "$(scaf .)"
+my-project.do-stuff
+```
 
 ## Usage
 
-Scaf can generate bash aliases for all action packages in a domain folder:
-
-```bash
-# Generate aliases for all actions in a domain
-eval "$(scaf my-domain)"
-
-# This creates aliases like:
-# my-domain.action-name='scaf path/to/action'
-# my-domain.deploy-remote-server='scaf path/to/deploy'
-```
-
-```bash
-# Generate aliases for scaf's own actions
-eval "$(scaf --self)"
-
-# Or use the explicit path if needed
-eval "$(scaf /home/lucid/.virtualenv/lib/python3.11/site-packages/scaf)""
-```
+Ask an agent to build or do what you need using the available aliases.
 
 ## Development
 
@@ -31,4 +73,13 @@ eval "$(scaf /home/lucid/.virtualenv/lib/python3.11/site-packages/scaf)""
 source dev/env.sh [--nuke]
 ```
 
-**Note:** if you change packages or hooks, nuke your env.
+**Note:** If you change packages or hooks, nuke your env.
+
+## F.A.Q
+
+- But `eval` is **evil**!
+  - That's not a question.
+- I tried to run `xyz.foo` and got `ModuleNotFoundError: No module named 'xyz'`, help!
+  - Also not a question, but try this:
+    - `export PYTHONPATH=.`
+    - `xyz.foo`
