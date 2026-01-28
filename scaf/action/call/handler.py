@@ -1,7 +1,6 @@
 import argparse
 import dataclasses
 import typing
-from pprint import pprint
 from typing import get_args, get_origin
 
 from scaf.action.call.command import CallAction

@@ -6,8 +6,6 @@ from hashlib import sha256
 from pathlib import Path
 from types import ModuleType
 
-from scaf.action_package.rules import must_contain_required_files
-
 
 def ensure_init_files(code_dir: Path):
   """Ensure __init__.py files exist in all directories under code_dir."""

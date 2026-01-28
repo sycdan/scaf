@@ -3,8 +3,7 @@ from functools import cached_property
 from pathlib import Path
 from types import ModuleType
 
-from scaf import config
-from scaf.tools import compute_hash, extract_first_dataclass
+from scaf.tools import extract_first_dataclass
 
 
 @dataclass
