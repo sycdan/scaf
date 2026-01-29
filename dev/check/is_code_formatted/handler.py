@@ -11,15 +11,11 @@ def handle(query: IsCodeFormatted) -> bool:
 
   if query.auto_fix:
     logger.info("Auto-fixing ruff issues...")
-    subprocess.run(
-      ["python", "-m", "ruff", "check", "--fix", "."], capture_output=True, text=True
-    )
+    subprocess.run(["python", "-m", "ruff", "check", "--fix", "."], capture_output=True, text=True)
     subprocess.run(["python", "-m", "ruff", "format", "."], capture_output=True, text=True)
 
     # Check if any files were modified by ruff
-    git_status = subprocess.run(
-      ["git", "status", "--porcelain"], capture_output=True, text=True
-    )
+    git_status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
     if git_status.stdout.strip():
       logger.info("Auto-fixed ruff issues, committing changes...")
       subprocess.run(["git", "add", "."], check=True)

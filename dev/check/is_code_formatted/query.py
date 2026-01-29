@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class IsCodeFormatted:
   """Check if code passes ruff linting and formatting checks."""
 
-  auto_fix: bool = True
+  auto_fix: bool = False
 
   def execute(self):
     from dev.check.is_code_formatted.handler import handle
