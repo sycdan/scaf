@@ -23,64 +23,107 @@ def find_available_actions(domain_folder: Path) -> list[str]:
   return sorted(actions)
 
 
+def generate_verb_noun_name(action_name: str, capability: str) -> str:
+  """Generate verb-noun pattern from action and capability names."""
+  action_slug = to_slug_case(action_name)
+  capability_slug = to_slug_case(capability)
+
+  # If action contains underscore, it's already verb_noun -> verb-noun
+  if "_" in action_name:
+    return action_slug
+
+  # Single verb + capability -> verb-capability
+  return f"{action_slug}-{capability_slug}"
+
+
 def generate_action_aliases(root: Path, action_paths: list[str]) -> list[Alias]:
   work_folder_name = root.name
-  aliases = []
 
-  # Create initial alias mappings
-  alias_map = {}
+  # Step 1: Generate preferred alias for each action
+  action_data = []
   for action_path in action_paths:
     path_parts = action_path.split("/")
-    action_name = to_slug_case(path_parts[-1])
-    base_alias = f"{work_folder_name}.{action_name}"
+    action_name = path_parts[-1]
 
-    if base_alias not in alias_map:
-      alias_map[base_alias] = [action_path]
+    if len(path_parts) == 1:
+      # Root level action - use simple name
+      preferred_alias = to_slug_case(action_name)
+    elif len(path_parts) == 2:
+      # capability/action pattern
+      capability = path_parts[-2]
+      preferred_alias = generate_verb_noun_name(action_name, capability)
     else:
-      alias_map[base_alias].append(action_path)
+      # domain/capability/action or deeper - use verb-noun with immediate parent
+      capability = path_parts[-2]
+      preferred_alias = generate_verb_noun_name(action_name, capability)
 
-  # Handle deduplication
+    action_data.append(
+      {
+        "path": action_path,
+        "path_parts": path_parts,
+        "preferred_alias": preferred_alias,
+        "action_name": action_name,
+      }
+    )
+
+  # Step 2: Detect conflicts and resolve with minimal path inclusion
+  alias_map = {}
+  for data in action_data:
+    preferred = data["preferred_alias"]
+    if preferred not in alias_map:
+      alias_map[preferred] = []
+    alias_map[preferred].append(data)
+
+  # Step 3: Generate final aliases with conflict resolution
   final_aliases = {}
-  for base_alias, paths in alias_map.items():
-    if len(paths) == 1:
-      # No conflict, use base alias
-      action_path = paths[0]
-      final_aliases[base_alias] = action_path
+
+  for preferred_alias, conflicts in alias_map.items():
+    if len(conflicts) == 1:
+      # No conflict - use preferred name
+      data = conflicts[0]
+      final_alias = f"{work_folder_name}.{preferred_alias}"
+      final_aliases[final_alias] = data["path"]
     else:
-      # Conflict, need to deduplicate by adding parent folders
-      # Find minimum depth needed to make all paths unique
-      max_depth = min(
-        len(path.split("/")) - 1 for path in paths
-      )  # -1 because we exclude the action name
+      # Resolve conflicts by adding minimal domain context
+      for data in conflicts:
+        path_parts = data["path_parts"]
+        action_name = data["action_name"]
 
-      for depth in range(1, max_depth + 1):
-        candidates = {}
-        all_unique = True
+        if len(path_parts) == 1:
+          # Root level - keep simple
+          final_alias = f"{work_folder_name}.{preferred_alias}"
+        elif len(path_parts) == 2:
+          # capability/action - add domain prefix if needed
+          final_alias = f"{work_folder_name}.{preferred_alias}"
+        else:
+          # domain/capability/action - add domain for disambiguation
+          domain = to_slug_case(path_parts[0])
+          capability = path_parts[-2]
+          verb_noun = generate_verb_noun_name(action_name, capability)
+          final_alias = f"{work_folder_name}.{domain}.{verb_noun}"
 
-        for action_path in paths:
-          path_parts = action_path.split("/")
-          action_name = to_slug_case(path_parts[-1])
+        # Handle remaining conflicts by adding more context
+        original_alias = final_alias
+        counter = 1
+        while final_alias in final_aliases:
+          if len(path_parts) > 2:
+            # Add more parent directories
+            extra_parts = (
+              path_parts[: -(2 - counter)] if counter < len(path_parts) - 1 else path_parts[:-1]
+            )
+            domain_path = ".".join(to_slug_case(part) for part in extra_parts)
+            capability = path_parts[-2]
+            verb_noun = generate_verb_noun_name(action_name, capability)
+            final_alias = f"{work_folder_name}.{domain_path}.{verb_noun}"
+          else:
+            # Fallback to numbering
+            final_alias = f"{original_alias}.{counter}"
+          counter += 1
 
-          # Build parent suffix using the specified depth
-          parent_parts = []
-          for i in range(depth):
-            if len(path_parts) >= 2 + i:  # Ensure we have enough parts
-              parent_parts.append(path_parts[-(2 + i)].replace("_", "-"))
+        final_aliases[final_alias] = data["path"]
 
-          parent_suffix = "-".join(parent_parts) if parent_parts else ""
-          candidate_alias = f"{work_folder_name}.{action_name}-{parent_suffix}"
-
-          if candidate_alias in candidates:
-            all_unique = False
-            break
-          candidates[candidate_alias] = action_path
-
-        if all_unique:
-          # Found a depth that makes all aliases unique
-          for alias_name, action_path in candidates.items():
-            final_aliases[alias_name] = action_path
-          break
-
+  # Create alias objects
+  aliases = []
   for alias_name, action_path in sorted(final_aliases.items()):
     aliases.append(Alias(name=alias_name, root=root, action=Path(action_path)))
 
