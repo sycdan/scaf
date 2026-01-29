@@ -172,8 +172,11 @@ def main():
       raise RuntimeError("fix failing tests")
 
   if pushing_to_main() and has_new_commits():
-    if not check_version_bump_needed():
-      sys.exit(1)
+    with Step("Checking version bump"):
+      from dev.check.is_version_bumped.query import IsVersionBumped
+
+      if not IsVersionBumped().execute():
+        raise RuntimeError("bump version before pushing to main")
   elif pushing_to_main():
     print("ℹ️  No new commits to push - skipping version check")
   else:
