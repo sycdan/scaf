@@ -1,3 +1,3 @@
 eval "$(scaf)"
 eval "$(scaf dev)"
-alias | grep ' scaf.'
+alias | grep -P ' scaf(?=\.)'
