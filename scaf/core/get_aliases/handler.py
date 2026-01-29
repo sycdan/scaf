@@ -59,9 +59,10 @@ def generate_action_aliases(root: Path, action_paths: list[str]) -> list[Alias]:
       domain = path_parts[0]
       capability = path_parts[-2]
 
-      # For verb_noun actions (with underscore), include capability
+      # Don't automatically include capability - only add during conflict resolution
+      # Generate simple preferred alias first, add capability only if conflicts exist
       if "_" in action_name:
-        preferred_alias = f"{to_slug_case(capability)}.{to_slug_case(action_name)}"
+        preferred_alias = to_slug_case(action_name)
       else:
         # For single verb actions, create verb-capability
         preferred_alias = generate_verb_noun_name(action_name, capability)
