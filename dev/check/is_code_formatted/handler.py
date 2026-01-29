@@ -26,8 +26,10 @@ def handle(query: IsCodeFormatted) -> bool:
     ["python", "-m", "ruff", "check", "."], capture_output=True, text=True
   )
   if lint_result.returncode != 0:
-    logger.error("Ruff linting failed:")
-    logger.error(lint_result.stdout)
+    print("Ruff linting failed:")
+    print(f"stdout: {lint_result.stdout}")
+    print(f"stderr: {lint_result.stderr}")
+    print(f"returncode: {lint_result.returncode}")
     return False
 
   format_result = subprocess.run(
