@@ -73,10 +73,10 @@ def main(argv=None):
   try:
     if args.domain:
       root = ensure_absolute_path(args.domain)
-      alias_filter = ""
+      action_filter = ""
     else:
-      root = Path(__file__).parent  # scaf's internal domain
-      alias_filter = "user/"
+      root = Path(__file__).parent.parent  # scaf's code root
+      action_filter = "scaf/user"
 
     if not root.exists():
       raise RuntimeError(f"Root does not exist: {root.as_posix()}")
@@ -85,7 +85,7 @@ def main(argv=None):
       action_package = LoadActionPackage(root, args.call).execute()
       pprint(CallAction(action_package, remaining).execute())
     else:
-      for alias in GetAliases(root, filter=alias_filter).execute():
+      for alias in GetAliases(root, filter=action_filter).execute():
         print(alias)
   except (ValueError, RuntimeError) as e:
     print_error(str(e))
