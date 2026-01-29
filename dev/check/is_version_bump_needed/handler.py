@@ -19,12 +19,12 @@ def last_commit_is_version_bump() -> bool:
 
 
 def handle(query: IsVersionBumpNeeded) -> bool:
-  if not query.remote_ref.endswith("/main"):
-    logger.info("Not pushing to main - skipping version check")
-    return False
-
   if last_commit_is_version_bump():
     logger.info("Version bump detected in last commit")
+    return False
+
+  if not query.remote_ref.endswith("/main"):
+    logger.info("Not pushing to main - skipping version check")
     return False
 
   logger.warning("Version bump is required before pushing to main")
