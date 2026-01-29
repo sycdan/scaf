@@ -4,21 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-@dataclass
-class Alias:
-  name: str
-  scaf_args: str
-
-  @classmethod
-  def from_raw(cls, raw: str) -> "Alias":
-    # e.g.: alias scaf.call='scaf C:/Users/Dan/Projects/scaf/scaf/action/call'
-    assert raw.startswith("alias "), f"Invalid alias format: {raw}"
-    raw = raw[6:]
-    name, command = raw.split("=", 1)
-    command = command.strip("'\"")
-    assert command.startswith("scaf "), f"Invalid alias command: {command}"
-    command = command[5:]
-    return cls(name=name, scaf_args=command)
 
 
 @dataclass
@@ -50,8 +35,8 @@ class Sandbox:
       **kwargs,
     )
 
-  def get_aliases(self) -> list[Alias]:
-    result = self.run("scaf")
+  def get_aliases(self, root: str = "") -> list[Alias]:
+    result = self.run("scaf", root)
     raw_aliases = result.stdout.splitlines()
     aliases = [Alias.from_raw(alias) for alias in raw_aliases if alias.strip()]
     return aliases
