@@ -14,20 +14,27 @@ from types import FunctionType
 @dataclass
 class Step:
   description: str
-  end: FunctionType = lambda: "✔️"
+  on_pass: FunctionType = lambda: ""
+  on_fail: FunctionType = lambda: ""
 
   def __enter__(self):
     print(f"🪜  {self.description}", end="... ")
 
   def __exit__(self, exc_type, exc_val, exc_tb):
     if exc_type is not None:
-      print(f"💥 {exc_val}")
+      print("❌")
+      if err := str(exc_val):
+        # our exceptions are empty, so this should be an actual exception
+        print(f"💥 {err}", file=sys.stderr)
+      suggestion = self.on_fail()
+      if suggestion:
+        print("💡 " + suggestion)
       sys.exit(1)
-    print(self.end())
+    print("✔️  " + self.on_pass())
 
 
 def change_to_repo_root():
-  with Step("Changing to repo root", end=lambda: os.getcwd()):
+  with Step("Changing to repo root", on_pass=lambda: os.getcwd()):
     repo_root = subprocess.run(
       ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True
     )
@@ -38,70 +45,9 @@ def change_to_repo_root():
         sys.path.insert(0, repo_root_path)
 
 
-def run_command(cmd, description):
-  """Run a shell command and return success status."""
-  try:
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-      print(f"❌ {description} failed:")
-      print(f"Command: {cmd}")
-      print(f"Error: {result.stderr}")
-      print(f"Output: {result.stdout}")
-      return False
-    return True
-  except Exception as e:
-    print(f"❌ {description} failed with exception: {e}")
-    return False
-
-
-def working_directory_clean():
-  print("🔍 Checking git status...")
-  result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
-
-  if result.returncode != 0:
-    print("❌ Failed to check git status")
-    return False
-
-  if result.stdout.strip():
-    print("❌ Git working directory is not clean:")
-    print(result.stdout)
-    print("Please commit or stash your changes before pushing.")
-    return False
-
-  print("✅ Git working directory is clean")
-  return True
-
-
-def tests_pass():
-  """Run all tests using pytest."""
-  print("🧪 Running tests...")
-  return run_command("python -m pytest", "Tests")
-
-
-def ruff_check():
-  """Run ruff linting and formatting checks."""
-  print("🧹 Running ruff checks...")
-
-  print("🔧 Auto-fixing ruff issues...")
-  subprocess.run(["python", "-m", "ruff", "check", "--fix", "."], capture_output=True, text=True)
-  subprocess.run(["python", "-m", "ruff", "format", "."], capture_output=True, text=True)
-
-  # Check if any files were modified by ruff
-  git_status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
-  if git_status.stdout.strip():
-    print("✅ Auto-fixed ruff issues, committing changes...")
-    subprocess.run(["git", "add", "."], check=True)
-    subprocess.run(["git", "commit", "-m", "Auto-fix ruff linting issues"], check=True)
-
-  # Now run the final check
-  if not run_command("python -m ruff check .", "Ruff linting"):
-    return False
-  return run_command("python -m ruff format --check .", "Ruff formatting")
-
-
-def pushing_to_main():
-  """git sends: <local_ref> <local_sha> <remote_ref> <remote_sha>"""
-  lines = sys.stdin.read().strip().splitlines()
+def get_push_info():
+  local_ref, local_sha, remote_ref, remote_sha = [""] * 4
+  lines: list[str] = sys.stdin.read().strip().splitlines()
   for line in lines:
     if not line.strip():
       continue
@@ -110,26 +56,8 @@ def pushing_to_main():
     if len(parts) < 4:
       continue
 
-    remote_ref = parts[2]
-
-    if remote_ref.endswith("/main"):
-      return True
-  return False
-
-
-def has_new_commits():
-  """Check if there are new commits to push to origin/main."""
-  result = subprocess.run(
-    ["git", "rev-list", "--count", "origin/main..HEAD"], capture_output=True, text=True
-  )
-  if result.returncode == 0:
-    count = int(result.stdout.strip())
-    print(f"📊 Found {count} new commits to push")
-    return count > 0
-
-  # Fallback: if origin/main doesn't exist, assume we have new commits
-  print("ℹ️  Cannot determine commit count, assuming new commits exist")
-  return True
+    local_ref, local_sha, remote_ref, remote_sha = parts[:4]
+  return local_ref, local_sha, remote_ref, remote_sha
 
 
 def main():
@@ -139,36 +67,42 @@ def main():
   from dev.check.is_version_bump_needed.query import IsVersionBumpNeeded
   from dev.check.is_working_dir_clean.query import IsWorkingDirClean
 
-  with Step("Checking git hook status"):
+  with Step(
+    "Checking if git hook is updated",
+    on_fail=lambda: "Run source dev/env.sh --nuke",
+  ):
     if not IsGitHookUpdated(Path(__file__)).execute():
-      raise RuntimeError("run 🛠️  source dev/env.sh --nuke")
+      raise RuntimeError()
 
-  with Step("Checking for work in progress"):
+  with Step(
+    "Checking if working directory is clean",
+    on_fail=lambda: "Commit or stash your changes",
+  ):
     if not IsWorkingDirClean().execute():
-      raise RuntimeError("commit or stash your changes before pushing")
+      raise RuntimeError()
 
-  with Step("Checking code formatting"):
+  with Step(
+    "Checking if code is formatted",
+    on_fail=lambda: "Run ruff check && ruff format --check",
+  ):
     if not IsCodeFormatted(auto_fix=True).execute():
-      raise RuntimeError("fix ruff linting and formatting issues")
+      raise RuntimeError()
 
-  with Step("Running tests"):
+  with Step(
+    "Checking if tests pass",
+    on_fail=lambda: "Fix failing tests",
+  ):
     if not DoTestsPass().execute():
-      raise RuntimeError("fix failing tests")
+      raise RuntimeError()
 
-  if pushing_to_main() and has_new_commits():
-    with Step("Checking version bump"):
-      if not IsVersionBumpNeeded().execute():
-        raise RuntimeError("bump version before pushing to main")
-  elif pushing_to_main():
-    print("ℹ️  No new commits to push - skipping version check")
-  else:
-    print("ℹ️  Not pushing to main - skipping version check")
-
-  print("✅ All pre-push checks passed!")
+  with Step(
+    "Checking if version bump is needed",
+    on_fail=lambda: "Run dev.bump-version",
+  ):
+    if not IsVersionBumpNeeded(*get_push_info()).execute():
+      raise RuntimeError()
 
 
 if __name__ == "__main__":
-  print("🚀 Running pre-push hook...")
   change_to_repo_root()
   main()
-  print("🏁 Good to go!")
