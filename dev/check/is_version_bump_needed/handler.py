@@ -5,12 +5,12 @@ import subprocess
 import sys
 import traceback
 
-from dev.check.is_version_bumped.query import IsVersionBumped
+from dev.check.is_version_bump_needed.query import IsVersionBumpNeeded
 
 logger = logging.getLogger(__name__)
 
 
-def handle(query: IsVersionBumped) -> bool:
+def handle(query: IsVersionBumpNeeded) -> bool:
   """Returns True if version has been bumped (last commit is a version bump)."""
 
   try:

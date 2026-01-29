@@ -99,23 +99,6 @@ def ruff_check():
   return run_command("python -m ruff format --check .", "Ruff formatting")
 
 
-def check_version_bump_needed():
-  """Check if a version bump is needed when pushing to main."""
-  from dev.bump_version.command import BumpVersion
-
-  try:
-    result = BumpVersion(dry_run=True).execute()
-    if result == "NEEDS_BUMP":
-      print("❌ Version bump is required before pushing to main")
-      print("💡 Run dev.bump-version")
-      return False
-    print(f"✅ Version is up to date: {result}")
-    return True
-  except Exception as e:
-    print(f"❌ Version check failed: {e}")
-    return False
-
-
 def pushing_to_main():
   """git sends: <local_ref> <local_sha> <remote_ref> <remote_sha>"""
   lines = sys.stdin.read().strip().splitlines()
