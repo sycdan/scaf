@@ -12,7 +12,7 @@ actions_to_create = [
 
 def test(sandbox):
   aliases = sandbox.get_aliases()
-  create_action = next((a for a in aliases if a.name == "user.create-action"), None)
+  create_action = next((a for a in aliases if a.name == "scaf.create-action"), None)
   assert create_action is not None
   for action_path, expected_alias in actions_to_create:
     result = sandbox.run_scaf(create_action.scaf_args + f" {action_path} command")
