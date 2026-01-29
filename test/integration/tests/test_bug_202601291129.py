@@ -1,7 +1,9 @@
 """Bug test: capability should only be added to alias when necessary for deduplication."""
 
 import subprocess
+
 import pytest
+
 from test.alias.entity import Alias
 
 
