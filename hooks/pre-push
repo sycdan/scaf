@@ -150,22 +150,25 @@ def has_new_commits():
 
 
 def main():
+  from dev.check.is_code_formatted.query import IsCodeFormatted
   from dev.check.is_git_hook_updated.query import IsGitHookUpdated
   from dev.check.is_working_dir_clean.query import IsWorkingDirClean
 
-  with Step("Checking if git hook is up to date"):
+  with Step("Checking git hook status"):
     if not IsGitHookUpdated(Path(__file__)).execute():
       raise RuntimeError("run 🛠️  source dev/env.sh --nuke")
 
-  with Step("Checking if working directory is clean"):
+  with Step("Checking for work in progress"):
     if not IsWorkingDirClean().execute():
       raise RuntimeError("commit or stash your changes before pushing")
 
-  if not ruff_check():
-    sys.exit(1)
+  with Step("Checking code formatting"):
+    if not IsCodeFormatted(auto_fix=True).execute():
+      raise RuntimeError("fix ruff linting and formatting issues")
 
   if not tests_pass():
     sys.exit(1)
+  sys.exit(1)
 
   if pushing_to_main() and has_new_commits():
     if not check_version_bump_needed():
