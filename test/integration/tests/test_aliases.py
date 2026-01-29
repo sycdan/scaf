@@ -9,8 +9,8 @@ from test.alias.entity import Alias
 @pytest.mark.parametrize(
   "root,expected_aliases",
   [
-    ("dev", ["dev.bump-version"]),
-    ("scaf", ["scaf.create-action"]),
+    (".", ["dev.bump-version"]),
+    ("", ["scaf.create-action"]),
   ],
 )
 def test_expected_aliases_are_exposed(root, expected_aliases):
