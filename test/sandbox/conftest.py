@@ -3,7 +3,9 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
 
+from test.alias.entity import Alias
 
 
 @dataclass
@@ -43,3 +45,10 @@ class Sandbox:
 
   def run_scaf(self, scaf_args: str) -> subprocess.CompletedProcess:
     return self.run("scaf", *(scaf_args.split()))
+
+
+@pytest.fixture
+def sandbox(tmp_path, monkeypatch):
+  # automatically run tests *inside* the sandbox
+  monkeypatch.chdir(tmp_path)
+  return Sandbox(tmp_path)

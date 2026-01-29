@@ -32,7 +32,7 @@ version = { attr = "scaf.__version__" }
 markers = [
   "integration: marks tests as integration tests (may require external dependencies)",
 ]
-testpaths = ["test/unit", "test/integration"]
+testpaths = ["test/"]
 norecursedirs = ["__pycache__"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
