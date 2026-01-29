@@ -70,8 +70,4 @@ else
   echo "⚠️  Not a git repository - skipping hook setup"
 fi
 
-echo "🪜  Generating aliases..."
-eval "$(scaf scaf)"
-alias | grep ' scaf.'
-
 echo "🎉 Development environment ready!"
