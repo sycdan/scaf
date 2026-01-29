@@ -5,7 +5,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from bump_version.command import BumpVersion
+from dev.bump_version.command import BumpVersion
 
 logger = logging.getLogger(__name__)
 

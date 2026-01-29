@@ -99,7 +99,7 @@ def main():
     "Checking if version bump is needed",
     on_fail=lambda: "Run dev.bump-version",
   ):
-    if not IsVersionBumpNeeded(*get_push_info()).execute():
+    if IsVersionBumpNeeded(*get_push_info()).execute():
       raise RuntimeError()
 
 
