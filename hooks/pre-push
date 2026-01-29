@@ -153,11 +153,11 @@ def main():
   from dev.check.is_git_hook_updated.query import IsGitHookUpdated
   from dev.check.is_working_dir_clean.query import IsWorkingDirClean
 
-  with Step("Checking git hook is up to date"):
+  with Step("Checking if git hook is up to date"):
     if not IsGitHookUpdated(Path(__file__)).execute():
       raise RuntimeError("run 🛠️  source dev/env.sh --nuke")
 
-  with Step("Checking working directory is clean"):
+  with Step("Checking if working directory is clean"):
     if not IsWorkingDirClean().execute():
       raise RuntimeError("commit or stash your changes before pushing")
 
