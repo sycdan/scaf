@@ -1,26 +1,41 @@
 #!/usr/bin/env python
 """
-Ensures git tree is clean, runs tests, and checks version when pushing to main.
+Ensures the repo is in a fit state before allowing a git push.
 """
 
 import os
 import subprocess
 import sys
+from dataclasses import dataclass
+from pathlib import Path
+from types import FunctionType
 
 
-def hook_is_current():
-  """Check that the installed git hook matches the source version."""
-  from dev.check_hook.query import CheckHookQuery
+@dataclass
+class Step:
+  description: str
+  end: FunctionType = lambda: "✔️"
 
-  try:
-    result = CheckHookQuery().execute()
-    if not result:
-      print("❌ Pre-push hook is out of date")
-      return False
-    return True
-  except Exception as e:
-    print(f"❌ Hook check failed: {e}")
-    return False
+  def __enter__(self):
+    print(f"🪜  {self.description}", end="... ")
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    if exc_type is not None:
+      print(f"💥 {exc_val}")
+      sys.exit(1)
+    print(self.end())
+
+
+def change_to_repo_root():
+  with Step("Changing to repo root", end=lambda: os.getcwd()):
+    repo_root = subprocess.run(
+      ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True
+    )
+    if repo_root.returncode == 0:
+      repo_root_path = repo_root.stdout.strip()
+      os.chdir(repo_root_path)
+      if repo_root_path not in sys.path:
+        sys.path.insert(0, repo_root_path)
 
 
 def run_command(cmd, description):
@@ -135,23 +150,16 @@ def has_new_commits():
 
 
 def main():
-  print("🚀 Running pre-push hook...")
+  from dev.check.is_git_hook_updated.query import IsGitHookUpdated
+  from dev.check.is_working_dir_clean.query import IsWorkingDirClean
 
-  # Change to repository root
-  repo_root = subprocess.run(
-    ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True
-  )
-  if repo_root.returncode == 0:
-    repo_root_path = repo_root.stdout.strip()
-    os.chdir(repo_root_path)
-    # Add dev directory to Python path so we can import dev actions
-    sys.path.insert(0, repo_root_path)
+  with Step("Checking git hook is up to date"):
+    if not IsGitHookUpdated(Path(__file__)).execute():
+      raise RuntimeError("run 🛠️  source dev/env.sh --nuke")
 
-  if not hook_is_current():
-    sys.exit(1)
-
-  if not working_directory_clean():
-    sys.exit(1)
+  with Step("Checking working directory is clean"):
+    if not IsWorkingDirClean().execute():
+      raise RuntimeError("commit or stash your changes before pushing")
 
   if not ruff_check():
     sys.exit(1)
@@ -171,4 +179,7 @@ def main():
 
 
 if __name__ == "__main__":
+  print("🚀 Running pre-push hook...")
+  change_to_repo_root()
   main()
+  print("🏁 Good to go!")
