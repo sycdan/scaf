@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import sys
 
 from dev.check.is_code_formatted.query import IsCodeFormatted
 
@@ -11,8 +12,10 @@ def handle(query: IsCodeFormatted) -> bool:
 
   if query.auto_fix:
     logger.info("Auto-fixing ruff issues...")
-    subprocess.run(["python", "-m", "ruff", "check", "--fix", "."], capture_output=True, text=True)
-    subprocess.run(["python", "-m", "ruff", "format", "."], capture_output=True, text=True)
+    subprocess.run(
+      [sys.executable, "-m", "ruff", "check", "--fix", "."], capture_output=True, text=True
+    )
+    subprocess.run([sys.executable, "-m", "ruff", "format", "."], capture_output=True, text=True)
 
     # Check if any files were modified by ruff
     git_status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
@@ -23,7 +26,7 @@ def handle(query: IsCodeFormatted) -> bool:
 
   # Run final checks
   lint_result = subprocess.run(
-    ["python", "-m", "ruff", "check", "."], capture_output=True, text=True
+    [sys.executable, "-m", "ruff", "check", "."], capture_output=True, text=True
   )
   if lint_result.returncode != 0:
     print("Ruff linting failed:")
@@ -33,7 +36,7 @@ def handle(query: IsCodeFormatted) -> bool:
     return False
 
   format_result = subprocess.run(
-    ["python", "-m", "ruff", "format", "--check", "."], capture_output=True, text=True
+    [sys.executable, "-m", "ruff", "format", "--check", "."], capture_output=True, text=True
   )
   if format_result.returncode != 0:
     logger.error("Ruff formatting check failed:")
