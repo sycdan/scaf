@@ -8,6 +8,21 @@ import subprocess
 import sys
 
 
+def hook_is_current():
+  """Check that the installed git hook matches the source version."""
+  from dev.check_hook.query import CheckHookQuery
+
+  try:
+    result = CheckHookQuery().execute()
+    if not result:
+      print("❌ Pre-push hook is out of date")
+      return False
+    return True
+  except Exception as e:
+    print(f"❌ Hook check failed: {e}")
+    return False
+
+
 def run_command(cmd, description):
   """Run a shell command and return success status."""
   try:
@@ -127,7 +142,13 @@ def main():
     ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True
   )
   if repo_root.returncode == 0:
-    os.chdir(repo_root.stdout.strip())
+    repo_root_path = repo_root.stdout.strip()
+    os.chdir(repo_root_path)
+    # Add dev directory to Python path so we can import dev actions
+    sys.path.insert(0, repo_root_path)
+
+  if not hook_is_current():
+    sys.exit(1)
 
   if not working_directory_clean():
     sys.exit(1)
