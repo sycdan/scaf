@@ -153,7 +153,6 @@ def main():
   from dev.check.do_tests_pass.query import DoTestsPass
   from dev.check.is_code_formatted.query import IsCodeFormatted
   from dev.check.is_git_hook_updated.query import IsGitHookUpdated
-  from dev.check.is_version_bumped.query import IsVersionBumped
   from dev.check.is_working_dir_clean.query import IsWorkingDirClean
 
   with Step("Checking git hook status"):
@@ -173,7 +172,9 @@ def main():
       raise RuntimeError("fix failing tests")
 
   if pushing_to_main() and has_new_commits():
-    with Step("Checking version"):
+    with Step("Checking version bump"):
+      from dev.check.is_version_bumped.query import IsVersionBumped
+
       if not IsVersionBumped().execute():
         raise RuntimeError("bump version before pushing to main")
   elif pushing_to_main():
