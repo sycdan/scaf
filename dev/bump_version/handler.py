@@ -33,7 +33,7 @@ def handle(command: BumpVersion) -> str:
   """
   from dev.check.is_version_bump_needed.query import IsVersionBumpNeeded
 
-  if not IsVersionBumpNeeded().execute():
+  if not IsVersionBumpNeeded(remote_ref="refs/heads/main").execute():
     logger.info("Version bump is not needed")
     return ""
 
