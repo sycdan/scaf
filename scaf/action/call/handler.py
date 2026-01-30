@@ -31,15 +31,26 @@ def build_parser_from_shape(shape_class: type, description: str):
     type_ = normalize_argparse_type(field.type)
     default = field.default
 
-    if default is dataclasses.MISSING:
+    if default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING:
       # required positional
       parser.add_argument(name, type=type_)
     else:
+      # optional with default or default_factory
       flag_name = to_slug_case(name)
       if type_ is bool:
-        parser.add_argument(f"--{flag_name}", action="store_true", default=default, dest=name)
+        # For bool fields, use the default or False if default_factory
+        effective_default = default if default is not dataclasses.MISSING else False
+        parser.add_argument(
+          f"--{flag_name}", action="store_true", default=effective_default, dest=name
+        )
       else:
-        parser.add_argument(f"--{flag_name}", type=type_, default=default, dest=name)
+        # For non-bool fields, use the default or call default_factory if available
+        if default is not dataclasses.MISSING:
+          effective_default = default
+        else:
+          # default_factory exists, call it to get the default value
+          effective_default = field.default_factory()
+        parser.add_argument(f"--{flag_name}", type=type_, default=effective_default, dest=name)
 
   return parser
 
