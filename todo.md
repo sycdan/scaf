@@ -44,7 +44,7 @@ scaf C:/Users/Dan/Projects/my-home-server --call mhs/control/execute_service_scr
 ## Goals
 
 - [ ] add an example to the `example` domain, if necessary
-- [ ] write an integration test that proves the bug exists (name the test file test_bug_<timestamp>.py as in other bug tests)
+- [ ] write an integration test that proves the bug exists (name the test file bugs/test_<%Y%m%d%H%M>.py as in other bug tests)
 - [ ] fix the bug
 - [ ] ensure the test passes
 - [ ] commit and push
