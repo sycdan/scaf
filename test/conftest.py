@@ -13,10 +13,10 @@ class Sandbox:
   root: Path
   scaf_prog_path = Path(__file__).parent.parent.parent / "scaf"
 
-  def chdir(self):
+  def chdir(self) -> None:
     os.chdir(self.root)
 
-  def write(self, relpath: str, content: str):
+  def write(self, relpath: str, content: str) -> Path:
     path = self.root / relpath
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
@@ -28,7 +28,7 @@ class Sandbox:
   def exists(self, relpath: str) -> bool:
     return (self.root / relpath).exists()
 
-  def run(self, *args, **kwargs):
+  def run(self, *args, **kwargs) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
       args,
       cwd=self.root,
@@ -43,12 +43,12 @@ class Sandbox:
     aliases = [Alias.from_raw(alias) for alias in raw_aliases if alias.strip()]
     return aliases
 
-  def run_scaf(self, scaf_args: str) -> subprocess.CompletedProcess:
-    return self.run("scaf", *(scaf_args.split()))
+  def run_scaf(self, *scaf_args) -> subprocess.CompletedProcess[str]:
+    return self.run("scaf", *scaf_args)
 
 
 @pytest.fixture
-def sandbox(tmp_path, monkeypatch):
+def sandbox(tmp_path, monkeypatch) -> Sandbox:
   # automatically run tests *inside* the sandbox
   monkeypatch.chdir(tmp_path)
   return Sandbox(tmp_path)
