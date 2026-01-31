@@ -69,11 +69,11 @@ def handle(command: CallAction):
   )
 
   try:
-    args = action_parser.parse_args(command.action_args)
+    args, extra_args = action_parser.parse_known_args(command.action_args)
   except SystemExit as e:
     if not e.code:
       return  # help was shown
     raise RuntimeError("Invalid action arguments.")
 
   action = shape_class(**vars(args))
-  return domain_action.logic_module.handle(action)
+  return domain_action.logic_module.handle(action, *extra_args)

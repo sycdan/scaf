@@ -15,7 +15,8 @@ def test(sandbox):
   create_action = next((a for a in aliases if a.name == "scaf.create-action"), None)
   assert create_action is not None
   for action_path, expected_alias in actions_to_create:
-    result = sandbox.run_scaf(create_action.scaf_args + f" {action_path}")
+    scaf_args = create_action.scaf_args.split()
+    result = sandbox.run_scaf(*scaf_args, action_path)
     assert result.returncode == 0
     assert sandbox.exists(action_path)
   aliases = sandbox.get_aliases(".")
