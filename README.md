@@ -1,6 +1,6 @@
 # Scaf
 
-Scaf (straightforward composable application framework) is an opinionated filesystem-based scaffolding system for devs who just want to keep things simple.
+Scaf is an opinionated filesystem-based domain-action exectutor for devs who just want to keep things simple.
 
 ## Setup
 
@@ -75,11 +75,7 @@ source dev/env.sh [--nuke]
 
 **Note:** If you change packages or hooks, nuke your env.
 
-## F.A.Q
+## FAQ
 
 - But `eval` is **evil**!
   - That's not a question.
-- I tried to run `xyz.foo` and got `ModuleNotFoundError: No module named 'xyz'`, help!
-  - Also not a question, but try this:
-    - `export PYTHONPATH=.`
-    - `xyz.foo`

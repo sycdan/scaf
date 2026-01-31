@@ -23,7 +23,6 @@ A **capability**...
 - comprises a set of operations (commands, queries)
 - contains services that encapsulate domain logic
 - evolves with the domain concept
-- applies the Single Responsibility Principle
 - should not exist without at least one action
 - is created automatically when the first action within it is created
 
@@ -40,92 +39,92 @@ cyberdyne/           <- domain
 
 ### General rule for extracting capabilities from paths
 
-Given a domain path like: `internal.network.devices.execute`
+Given a domain path like: `cyberdyne.skynet.offense.terminator.deploy`
 
 Use this rule:
 
 > Find the last noun before the verb
 
-That noun (`devices`) is the capability.
+That noun (`terminator`) is the capability.
 
-Everything before the verb is the capability path.
+Everything before the verb comprises the domain.
 
-Verbs tend to be like:
+## Meaning of "Action"
 
-```text
-audit
-configure
-create
-delete
-execute
-export
-get
-import
-list
-monitor
-provision
-render
-reporting
-sync
-update
-```
+A domain **action**...
+
+- represents something a capability can do at the request of a user
+- applies the Single Responsibility Principle
+- can be a query (read-only) or a command
+
+By convention, a query can and should return cached data, but a command should not.
 
 ## Meaning of "Stable Entity"
 
-A **stable** entity...
+A **stable entity**...
 
-- is a *simple* entity
-- exists in a domain has no exposed actions
-- is not *capable*
-
-In REST terms, it is a **resource**.
+- exists in a domain
+- has state
+- may have an identifier
+- does not expose its own actions
+- is acted upon by a capability
 
 **Example:**
 
 ```text
-cyberdyne/           <- domain
-  skynet/            <- domain
-    weapon/          <- capability
-      nuke/          <- entity
-        entity.py    <- entity shape
-        rules.py     <- validation logic
+cyberdyne/             <- domain
+  skynet/              <- domain
+    defense/           <- capability
+      nuke/            <- stable entity
+        entity.py      <- entity shape
+        rules.py       <- validation logic
+      fire_nukes/      <- domain action
+        command.py     <- action shape
+        handler.py     <- execution logic
 ```
 
 ## Meaning of "Capable Entity"
 
-A **capable** entity...
+A **capable entity**...
 
-- is a *complex* entity
-- exists in a domain and exposes one or more actions
-- is a **resource controller** in REST terms
+- exists in a domain
+- has state
+- has an identifier
+- exposes one or more actions (typically simple verbs)
 
 **Example:**
 
 ```text
-cyberdyne/           <- domain
-  skynet/            <- domain
-    nuke/            <- capable entity
-      entity.py      <- entity shape
-      arm/           <- action
-        command.py   <- action shape
-        handler.py   <- execution logic
-      disarm/        <- action
-        command.py   <- action shape
-        handler.py   <- execution logic
-      status/        <- action (read-only)
-        query.py     <- action shape
-        handler.py   <- execution logic
-      fire/          <- action
-        command.py   <- action shape
-        handler.py   <- execution logic
+cyberdyne/             <- domain
+  skynet/              <- domain
+    offense/           <- capability
+      terminator/      <- capable entity
+        entity.py      <- entity shape
+        rules.py       <- validation logic
+        commission/    <- action
+          command.py   <- action shape
+          handler.py   <- execution logic
+        decommission/  <- action
+          command.py   <- action shape
+          handler.py   <- execution logic
+        deploy/        <- action
+          command.py   <- action shape
+          handler.py   <- execution logic
+        get/           <- action (returns entity state, read only)
+          query.py     <- action shape
+          handler.py   <- execution logic       
+        set/           <- action (updates entity state)
+          command.py   <- action shape
+          handler.py   <- execution logic
 ```
 
 **Example command.py:**
 
 ```python
 @dataclass
-class CreateCapabilityCommand:
-  pass
+class DeployTerminator:
+  target_first: str = "Sarah"
+  target_last: str = "Connor"
 ```
 
 When using HTTP/1.1, commands must be invoked using the POST method.
@@ -134,8 +133,9 @@ When using HTTP/1.1, commands must be invoked using the POST method.
 
 ```python
 @dataclass
-class ListCapabilitiesQuery:
-  pass
+class GetTerminator:
+  health: int
+  position: tuple[int]
 ```
 
 When using HTTP/1.1, commands may be invoked using either POST or GET methods (POST is required for sufficiently large queries).
@@ -153,47 +153,26 @@ The final segment of any action path is always the action to perform.
 > "Where does validation logic live?"
 
 ```python
-from example.domain.rules import validation
-```
-
-> "Where are naming conventions defined?"
-
-```python
-from example.domain.rules import naming
-```
-
-> "What if I need to load modules dynamically?"
-
-```python
-from example.domain import loader
+from example.<domain>.<capability>.<entity> import rules
 ```
 
 > "Where is the shape of a read-only action defined?"
 
 ```python
-from example.domain.<verb_noun>.query import <VerbNoun>Query
+from example.<domain>.<capability>.<verb_noun>.query import <VerbNoun>
 ```
 
 > "Where is the shape of a read-write or write-only action defined?"
 
 ```python
-from example.domain.<verb_noun>.command import <VerbNoun>Command
+# capable entity
+from example.<domain>.<capability>.<noun>.<verb>.command import <VerbNoun>
+# capability action
+from example.<domain>.<capability>.<verb_noun>.command import <VerbNoun>
 ```
 
 > "Where is an action's logic defined?"
 
 ```python
-from example.domain.<verb_noun>.handler import handle
-```
-
-> "Where do I put domain models?"
-
-```python
-from example.domain import models
-```
-
-> "Where is the main CLI entrypoint to a domain, if it has one?"
-
-```python
-from example.domain import cli
+from example.<domain>.<capability>.<verb_noun>.handler import handle
 ```
