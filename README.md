@@ -29,13 +29,12 @@ fi
 Create a `.venvrc` file with content like content:
 
 ```bash
-# Add project-specific aliases to the shell
+# Add project-specific aliases to the shell:
 eval "$(scaf .)"
-alias | grep -P ' my-project(?=\.)'
-
-# Add scaf's user aliases to the shell
+# Add scaf's user aliases to the shell:
 eval "$(scaf)"
-alias | grep -P ' scaf(?=\.)'
+# Echo all scaf aliases:
+alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'
 ```
 
 Install scaf:
