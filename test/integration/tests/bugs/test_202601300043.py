@@ -1,7 +1,5 @@
 """Bug test: script_args with default_factory should not be required."""
 
-import pytest
-
 
 def test_script_args_with_default_factory_not_required(sandbox):
   """

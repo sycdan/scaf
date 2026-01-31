@@ -40,7 +40,9 @@ def build_parser_from_shape(shape_class: type, description: str):
       if type_ is bool:
         # For bool fields, use the default or False if default_factory
         effective_default = default if default is not dataclasses.MISSING else False
-        parser.add_argument(f"--{flag_name}", action="store_true", default=effective_default, dest=name)
+        parser.add_argument(
+          f"--{flag_name}", action="store_true", default=effective_default, dest=name
+        )
       else:
         # For non-bool fields, use the default or call default_factory if available
         if default is not dataclasses.MISSING:
