@@ -3,12 +3,11 @@ import logging
 import os
 import sys
 from pathlib import Path
-from pprint import pprint
 
 from scaf.action.call.command import CallAction
 from scaf.action_package.load.command import LoadActionPackage
 from scaf.core.get_aliases.query import GetAliases
-from scaf.output import print_error
+from scaf.output import print_error, print_response
 
 
 def ensure_absolute_path(path: Path | str) -> Path:
@@ -83,7 +82,7 @@ def main(argv=None):
 
     if args.call:
       action_package = LoadActionPackage(root, args.call).execute()
-      pprint(CallAction(action_package, remaining).execute())
+      print_response(CallAction(action_package, remaining).execute())
     else:
       for alias in GetAliases(root, filter=action_filter).execute():
         print(alias)

@@ -1,2 +1,2 @@
 eval "$(scaf .)"
-alias | grep -P ' scaf(?=\.)'
+alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'

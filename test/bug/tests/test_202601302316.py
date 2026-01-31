@@ -1,5 +1,7 @@
 """Bug test: unable to pass dynamic args to action."""
 
+import json
+
 from scaf import config
 
 
@@ -19,4 +21,5 @@ def test_pass_dynamic_args_example_action(sandbox):
     f"Expected success but got error: {result.stdout}\n{result.stderr}"
   )
   assert "unrecognized arguments" not in result.stderr.lower()
-  assert "init --with-flag" in result.stdout  # extra args passed to the actions
+  response = json.loads(result.stdout)
+  assert "--with-flag" in response["args"]
