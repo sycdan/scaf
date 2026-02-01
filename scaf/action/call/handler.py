@@ -49,7 +49,7 @@ def build_parser_from_shape(shape_class: type, description: str):
           effective_default = default
         else:
           # default_factory exists, call it to get the default value
-          effective_default = field.default_factory()
+          effective_default = field.default_factory()  # type: ignore
         parser.add_argument(f"--{flag_name}", type=type_, default=effective_default, dest=name)
 
   return parser
