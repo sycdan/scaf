@@ -3,6 +3,7 @@ import sys
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from pprint import pprint
+from uuid import UUID
 
 # Colors for output
 RED = "\033[0;31m"
@@ -40,6 +41,8 @@ class JSONEncoder(json.JSONEncoder):
       return asdict(obj)  # type: ignore
     elif isinstance(obj, Path):
       return obj.as_posix()
+    elif isinstance(obj, UUID):
+      return str(obj)
     elif hasattr(obj, "__dict__"):
       return obj.__dict__
     else:
