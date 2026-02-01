@@ -22,8 +22,8 @@ def split_argv(argv: list[str]) -> tuple[list[str], list[str]]:
   if "--" in argv:
     index = argv.index("--")
     remaining = argv[index + 1 :]
-    return argv[1:index], remaining
-  return argv[1:], []
+    return argv[0:index], remaining
+  return argv[0:], []
 
 
 def configure_logging(verbosity: int):
@@ -43,7 +43,7 @@ def configure_logging(verbosity: int):
 
 
 def main(argv=None):
-  argv, remaining = split_argv(list(argv or sys.argv))
+  argv, remaining = split_argv(list(argv or sys.argv[1:]))
   parser = argparse.ArgumentParser(
     description="Discover actions within a domain, or execute an action.",
     prog="scaf",
