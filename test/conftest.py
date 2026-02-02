@@ -34,6 +34,7 @@ class Sandbox:
       cwd=self.root,
       text=True,
       capture_output=True,
+      encoding="utf-8",
       **kwargs,
     )
 

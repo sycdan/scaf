@@ -1,20 +1,43 @@
 """Constructs bash aliases for action packages in a domain/capability."""
 
+import logging
 import os
 from pathlib import Path
 
 from scaf.action_package.rules import must_contain_required_files
 from scaf.alias.entity import Alias
 from scaf.core.get_aliases.query import GetAliases
-from scaf.output import print_error
 from scaf.tools import to_slug_case
+
+logger = logging.getLogger(__name__)
+
+
+def load_scafignore(domain_folder: Path) -> list[str]:
+  """Load .scafignore file from domain folder, if it exists."""
+  ignore_file = domain_folder / ".scafignore"
+  ignore_patterns = []
+  if ignore_file.exists():
+    with ignore_file.open("r", encoding="utf-8") as f:
+      for line in f:
+        line = line.strip()
+        if line and not line.startswith("#"):
+          ignore_patterns.append(line)
+    logger.info("Loaded .scafignore with %d pattern(s)", len(ignore_patterns))
+  return ignore_patterns
 
 
 def find_available_actions(domain_folder: Path) -> list[str]:
+  logger.info("Searching for action packages in domain folder: %s", domain_folder.as_posix())
+  ignore_patterns = load_scafignore(domain_folder)
   actions = []
   for base, dirs, files in os.walk(domain_folder):
     # Skip hidden directories and __pycache__ etc.
     dirs[:] = [d for d in dirs if not d.startswith(".") and not d.startswith("_")]
+    # Apply .scafignore patterns
+    relative_base = Path(base).relative_to(domain_folder).as_posix()
+    if any(Path(relative_base).match(pattern) for pattern in ignore_patterns):
+      logger.debug("Ignoring folder due to .scafignore: %s", relative_base)
+      continue
     try:
       must_contain_required_files(files)
       actions.append(Path(base).relative_to(domain_folder).as_posix())
@@ -37,6 +60,7 @@ def generate_verb_noun_name(action_name: str, capability: str) -> str:
 
 
 def generate_action_aliases(root: Path, action_paths: list[str]) -> list[Alias]:
+  logger.info("Generating aliases for %d actions", len(action_paths))
   work_folder_name = root.name
 
   # Step 1: Generate preferred alias for each action
@@ -133,18 +157,6 @@ def generate_action_aliases(root: Path, action_paths: list[str]) -> list[Alias]:
     aliases.append(Alias(name=alias_name, root=root, action=Path(action_path)))
 
   return aliases
-
-
-def handle_domain_capability(folder: Path):
-  action_paths = find_available_actions(folder)
-
-  if not action_paths:
-    print_error(f"No action packages found in: {folder.as_posix()}")
-    return
-
-  aliases = generate_action_aliases(folder, action_paths)
-  for alias in aliases:
-    print(alias)
 
 
 def handle(command: GetAliases) -> list[Alias]:

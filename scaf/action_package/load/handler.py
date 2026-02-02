@@ -1,4 +1,5 @@
 import importlib.util
+import logging
 from pathlib import Path
 from types import ModuleType
 
@@ -8,6 +9,8 @@ from scaf.action_package.load.command import LoadActionPackage
 from scaf.action_package.rules import must_contain_required_files
 from scaf.output import print_warning
 from scaf.tools import compute_hash
+
+logger = logging.getLogger(__name__)
 
 
 def _load_module_from_file(file: Path, hash: str = "") -> ModuleType:
@@ -63,6 +66,7 @@ def load_logic_module(action_dir: Path) -> ModuleType:
 
 
 def handle(command: LoadActionPackage) -> ActionPackage:
+  logger.debug(f"Handling {command=}")
   action_path = command.root / command.action_folder
   action_folder = ensure_action_folder(action_path)
   must_contain_required_files([f.name for f in action_folder.iterdir()])
@@ -70,6 +74,7 @@ def handle(command: LoadActionPackage) -> ActionPackage:
   init_module = load_init_module(action_folder)
   shape_module = load_shape_module(action_folder)
   logic_module = load_logic_module(action_folder)
+  logger.info(f"Action package loaded from {action_folder.as_posix()}")
   return ActionPackage(
     command.root,
     action_folder=action_folder,

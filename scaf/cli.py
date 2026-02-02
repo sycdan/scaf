@@ -6,8 +6,11 @@ from pathlib import Path
 
 from scaf.action.call.command import CallAction
 from scaf.action_package.load.command import LoadActionPackage
+from scaf.config import configure_logging
 from scaf.core.get_aliases.query import GetAliases
-from scaf.output import print_error, print_response
+from scaf.output import print_response
+
+logger = logging.getLogger(__name__)
 
 
 def ensure_absolute_path(path: Path | str) -> Path:
@@ -24,22 +27,6 @@ def split_argv(argv: list[str]) -> tuple[list[str], list[str]]:
     remaining = argv[index + 1 :]
     return argv[0:index], remaining
   return argv[0:], []
-
-
-def configure_logging(verbosity: int):
-  level = logging.WARNING  # default
-  if verbosity >= 3:
-    level = logging.DEBUG
-  elif verbosity == 2:
-    level = logging.INFO
-  elif verbosity == 1:
-    level = logging.WARNING
-
-  logging.basicConfig(
-    level=level,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-  )
 
 
 def main(argv=None):
@@ -64,7 +51,7 @@ def main(argv=None):
     "-v",
     action="count",
     default=0,
-    help="Enable verbose output.",
+    help="Increase output verbosity (can be used multiple times).",
   )
   args: argparse.Namespace = parser.parse_args(argv)
   configure_logging(args.verbose)
@@ -81,11 +68,13 @@ def main(argv=None):
       raise RuntimeError(f"Root does not exist: {root.as_posix()}")
 
     if args.call:
+      logger.info(f"Calling action '{args.call}' in domain at: {root.as_posix()}")
       action_package = LoadActionPackage(root, args.call).execute()
       print_response(CallAction(action_package, remaining).execute())
     else:
+      logger.info(f"Listing actions in domain at: {root.as_posix()}")
       for alias in GetAliases(root, filter=action_filter).execute():
         print(alias)
   except (ValueError, RuntimeError) as e:
-    print_error(str(e))
+    logger.error(str(e))
     exit(1)

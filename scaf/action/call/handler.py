@@ -1,5 +1,6 @@
 import argparse
 import dataclasses
+import logging
 import typing
 from typing import get_args, get_origin
 
@@ -7,16 +8,21 @@ from scaf.action.call.command import CallAction
 from scaf.config import set_root_dir
 from scaf.tools import to_slug_case
 
+logger = logging.getLogger(__name__)
+
 
 def normalize_argparse_type(t):
+  logger.debug(msg=f"Normalizing type {t} for argparse")
   origin = get_origin(t)
 
   # Optional[T] or Union[T, None]
   if origin is typing.Union:
-    args = [a for a in get_args(t) if a is not type(None)]
-    if len(args) == 1:
-      return normalize_argparse_type(args[0])
-    # fallback: treat as string
+    logger.debug(f"{origin=}")
+    types = [a for a in get_args(t) if a is not type(None)]
+    if len(types) > 0:
+      return normalize_argparse_type(types[-1])
+
+    # fallback to string
     return str
 
   # bare type
@@ -24,11 +30,18 @@ def normalize_argparse_type(t):
 
 
 def build_parser_from_shape(shape_class: type, description: str):
+  logger.debug(
+    f"Building argparse parser from shape class {shape_class} with description: {description}"
+  )
   parser = argparse.ArgumentParser(description=description)
 
   for field in dataclasses.fields(shape_class):
+    logger.debug(
+      f"Processing field {field.name} of type {field.type} with default {field.default}"
+    )
     name = field.name
     type_ = normalize_argparse_type(field.type)
+    logger.debug(f"Normalized type for field '{name}': {type_}")
     default = field.default
 
     if default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING:
@@ -56,6 +69,7 @@ def build_parser_from_shape(shape_class: type, description: str):
 
 
 def handle(command: CallAction):
+  logger.debug(f"Handling {command=}")
   root = command.action_package.root
   set_root_dir(root)
 

@@ -2,12 +2,13 @@
 
 **Note:** Ignore commented blocks (surrounded by <!-- -->).
 
-<!-- ## Bug reported by user
+## Bug reported by user
+
 
 ## Goals
 
-- [x] add an example to the `example` domain, if necessary
+- [ ] add an example to the `example` domain, if necessary
 - [ ] write an integration test that proves the bug exists (name the test file bug/tests/test_<%Y%m%d%H%M>.py as in other bug tests)
 - [ ] fix the bug
 - [ ] ensure the test passes
-- [ ] commit and push -->
+- [ ] commit and push
