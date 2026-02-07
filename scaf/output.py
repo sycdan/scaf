@@ -1,6 +1,7 @@
 import json
 import sys
 from dataclasses import asdict, is_dataclass
+from datetime import datetime
 from pathlib import Path
 from pprint import pprint
 from uuid import UUID
@@ -43,6 +44,8 @@ class JSONEncoder(json.JSONEncoder):
       return obj.as_posix()
     elif isinstance(obj, UUID):
       return str(obj)
+    elif isinstance(obj, datetime):
+      return obj.isoformat()
     elif hasattr(obj, "__dict__"):
       return obj.__dict__
     else:
