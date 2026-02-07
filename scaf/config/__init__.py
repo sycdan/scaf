@@ -36,7 +36,7 @@ def configure_logging(verbosity: int):
 
   logging.addLevelName(logging.DEBUG, "🐛")
   logging.addLevelName(logging.INFO, "ℹ️ ")
-  logging.addLevelName(logging.WARNING, "⚠️")
+  logging.addLevelName(logging.WARNING, "⚠️ ")
   logging.addLevelName(logging.ERROR, "❌")
 
   logging.basicConfig(
