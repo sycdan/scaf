@@ -78,3 +78,6 @@ source dev/env.sh [--nuke]
 
 - But `eval` is **evil**!
   - That's not a question.
+
+- Why am I getting `MyType | None is not callable`?
+  - You are probably on an old python version -- use `Union[MyType, Non]` instead.
