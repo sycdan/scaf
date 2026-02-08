@@ -53,7 +53,7 @@ class JSONEncoder(json.JSONEncoder):
       return super().default(obj)
 
 
-def print_response(response) -> None:
+def print_result(response) -> None:
   """Print action response as JSON if possible, fallback to pprint if serialization fails."""
   if response is None:
     return

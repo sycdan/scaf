@@ -8,7 +8,7 @@ from scaf.action.call.command import CallAction
 from scaf.action_package.load.command import LoadActionPackage
 from scaf.config import configure_logging
 from scaf.core.get_aliases.query import GetAliases
-from scaf.output import print_response
+from scaf.output import print_result
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,14 @@ def split_argv(argv: list[str]) -> tuple[list[str], list[str]]:
     remaining = argv[index + 1 :]
     return argv[0:index], remaining
   return argv[0:], []
+
+
+def call(root: Path, action: Path | str, *args):
+  if not isinstance(action, Path):
+    action = Path(action)
+  logger.info(f"Calling action '{action.as_posix()}' from {root.as_posix()}")
+  action_package = LoadActionPackage(root, action).execute()
+  return CallAction(action_package, list(args)).execute()
 
 
 def main(argv=None):
@@ -67,10 +75,8 @@ def main(argv=None):
     if not root.exists():
       raise RuntimeError(f"Root does not exist: {root.as_posix()}")
 
-    if args.call:
-      logger.info(f"Calling action '{args.call}' in domain at: {root.as_posix()}")
-      action_package = LoadActionPackage(root, args.call).execute()
-      print_response(CallAction(action_package, remaining).execute())
+    if action := args.call:
+      print_result(call(root, action, *remaining))
     else:
       logger.info(f"Listing actions in domain at: {root.as_posix()}")
       for alias in GetAliases(root, filter=action_filter).execute():
