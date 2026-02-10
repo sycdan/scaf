@@ -46,6 +46,8 @@ class JSONEncoder(json.JSONEncoder):
       return str(obj)
     elif isinstance(obj, datetime):
       return obj.isoformat()
+    elif isinstance(obj, set):
+      return list(obj)
     elif hasattr(obj, "__dict__"):
       return obj.__dict__
     else:

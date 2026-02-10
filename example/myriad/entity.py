@@ -11,3 +11,4 @@ class Myriad:
   text: str = field(default="hello")
   float: float = field(default=3.14)
   timestamp: datetime = field(default_factory=datetime.now)
+  unique: set[int] = field(default_factory=set)
