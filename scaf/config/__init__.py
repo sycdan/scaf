@@ -1,23 +1,13 @@
 import logging
-import os
 import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEBUG = os.getenv("SCAF_DEBUG", "0") == "1"
 REPO_ROOT = Path(__file__).parent.parent.parent
 """for internal use only -- should never change"""
-ROOT_DIR = Path(__file__).parent.parent.parent
-"""the level above the working domain folder"""
-
-
-def set_root_dir(path: Path | str):
-  global ROOT_DIR
-  ROOT_DIR = Path(path)
-  if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
-  logger.debug(f"{ROOT_DIR=}")
+SCAF_FOLDER_NAME = ".scaf"
+ALIASES_FILENAME = "aliases"
 
 
 def configure_logging(verbosity: int):

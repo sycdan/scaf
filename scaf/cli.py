@@ -1,58 +1,21 @@
 import argparse
 import logging
-import os
 import sys
-from pathlib import Path
 
-from scaf.action.call.command import CallAction
-from scaf.action_package.load.command import LoadActionPackage
+import scaf
 from scaf.config import configure_logging
-from scaf.core.get_aliases.query import GetAliases
 from scaf.output import print_result
+from scaf.user.call.command import Call
+from scaf.user.init.command import Init
 
 logger = logging.getLogger(__name__)
 
 
-def ensure_absolute_path(path: Path | str) -> Path:
-  path = Path(path)
-  if not path.is_absolute():
-    path = Path(os.getcwd()) / path
-  return path
-
-
-def split_argv(argv: list[str]) -> tuple[list[str], list[str]]:
-  """manually stop grabbing scaf args at the first "--" since argparse doesn't do it how we need"""
-  if "--" in argv:
-    index = argv.index("--")
-    remaining = argv[index + 1 :]
-    return argv[0:index], remaining
-  return argv[0:], []
-
-
-def call(root: Path, action: Path | str, *args):
-  if not isinstance(action, Path):
-    action = Path(action)
-  logger.info(f"Calling action '{action.as_posix()}' from {root.as_posix()}")
-  action_package = LoadActionPackage(root, action).execute()
-  return CallAction(action_package, list(args)).execute()
-
-
 def main(argv=None):
-  argv, remaining = split_argv(list(argv or sys.argv[1:]))
   parser = argparse.ArgumentParser(
-    description="Discover actions within a domain, or execute an action.",
+    description="What do you want to do?",
     prog="scaf",
-  )
-  parser.add_argument(
-    "domain",
-    nargs="?",
-    default="",
-    help="Where to import domain actions from. Omit to use scaf's internal domain.",
-  )
-  parser.add_argument(
-    "--call",
-    default="",
-    help="Execute the domain action at this path. Additional args are passed to the action.",
+    add_help=False,
   )
   parser.add_argument(
     "--verbose",
@@ -61,26 +24,37 @@ def main(argv=None):
     default=0,
     help="Increase output verbosity (can be used multiple times).",
   )
-  args: argparse.Namespace = parser.parse_args(argv)
+  parser.add_argument(
+    "command",
+    choices=["init", "version", "call"],
+    nargs="?",
+    help="Specify the command to execute. When calling an action, add -h for help.",
+  )
+  args, remaining = parser.parse_known_args(argv or sys.argv[1:])
   configure_logging(args.verbose)
 
+  if not (command := (args.command or "").strip().lower()):
+    return parser.print_help()
+
   try:
-    if args.domain:
-      root = ensure_absolute_path(args.domain)
-      action_filter = ""
+    if command == "init":
+      init_kwargs = {}
+      try:
+        init_kwargs["search_depth"] = remaining.pop(0)
+      except IndexError:
+        pass
+      return Init(**init_kwargs).execute()
+    if command == "version":
+      return print(scaf.__version__)
+    if command == "call":
+      call_kwargs = {}
+      try:
+        call_kwargs["action"] = remaining.pop(0)
+      except IndexError:
+        raise ValueError("No action specified. Usage: scaf call <path/to/action> [args...]")
+      return print_result(Call(**call_kwargs).execute(*remaining))
     else:
-      root = Path(__file__).parent.parent  # scaf's code root
-      action_filter = "scaf/user"
-
-    if not root.exists():
-      raise RuntimeError(f"Root does not exist: {root.as_posix()}")
-
-    if action := args.call:
-      print_result(call(root, action, *remaining))
-    else:
-      logger.info(f"Listing actions in domain at: {root.as_posix()}")
-      for alias in GetAliases(root, filter=action_filter).execute():
-        print(alias)
+      raise ValueError(f"Unknown command: {command}")
   except (ValueError, RuntimeError) as e:
     logger.error(str(e))
     exit(1)

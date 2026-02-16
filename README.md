@@ -1,72 +1,44 @@
 # Scaf
 
-Scaf is an opinionated filesystem-based domain-action exectutor for devs who just want to keep things simple.
+**_Build more, sweat less._**
 
-## Setup
-
-**Note:** Currently only bash is supported (use WSL or git bash on Windows).
-
-Change to your project root:
-
-```bash
-cd ~/Projects/my-project
-```
-
-Create a venv:
-
-```bash
-python -m venv .venv
-```
-
-Add this to the end of your venv activate script (e.g. `.venv/Scripts/activate`):
-
-```bash
-if [ -f "$VIRTUAL_ENV/"../.venvrc ]; then
-  source "$VIRTUAL_ENV/"../.venvrc
-fi
-```
-
-Create a `.venvrc` file with content like content:
-
-```bash
-# Add project-specific aliases to the shell:
-eval "$(scaf .)"
-# Add scaf's user aliases to the shell:
-eval "$(scaf)"
-# Echo all scaf aliases:
-alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'
-```
-
-Install scaf:
-
-```bash
-.venv/Scripts/pip install git+http://github.com/sycdan/scaf
-```
-
-Activate the venv:
-
-```bash
-source .venv/Scripts/activate
-```
-
-Create an action:
-
-```bash
-scaf.create-action dev/do_stuff command
-```
-
-Add the new action alias and call it:
-
-```bash
-eval "$(scaf .)"
-my-project.do-stuff
-```
+Scaf is an opinionated filesystem-based project builder and domain-action runner for devs who just want to keep things simple. It solves the easy problems in application development, so you can focus on the hard ones.
 
 ## Usage
 
-Ask an agent to build or do what you need using the available aliases.
+**Note:** Currently only bash is supported (use WSL or git bash on Windows).
+
+Install scaf (can be in your user/system env, but a [`venv`](#what-is-a-venv) is recommended):
+
+```bash
+pip install git+http://scaf.sycdan.com
+```
+
+Initialize scaf in your project root:
+
+```bash
+scaf init
+```
+
+Add this to your [`.venvrc`](#what-is-venvrc) or `.bashrc` file:
+
+```bash
+# Load and display scaf aliases
+source .scaf/aliases
+alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'
+```
+
+Invoke an action (this will create it and add an alias, if it does not exist):
+
+```bash
+scaf call example/world/greet
+```
 
 ## Development
+
+Keep dependencies to a minimum.
+
+### Environment Setup
 
 ```bash
 source dev/env.sh [--nuke]
@@ -76,8 +48,40 @@ source dev/env.sh [--nuke]
 
 ## FAQ
 
-- But `eval` is **evil**!
-  - That's not a question.
+### How do I see verbose output from scaf calls?
 
-- Why am I getting `MyType | None is not callable`?
-  - You are probably on an old python version -- use `Union[MyType, Non]` instead.
+Edit your `.scaf/aliases` file:
+
+```bash
+alias domain.action="scaf --vvv call $DOMAIN_ROOT/domain/action"
+#                         ^ add this
+```
+
+### Why am I getting `Failed to load action package backend/domain/action: No module named 'domain'`
+
+Run `scaf init` in your app's `PYTHONPATH` directory (e.g. `backend`).
+
+### Why am I getting `MyType | None is not callable`?
+
+You are probably on an old python version -- use `Union[MyType, None]` instead.
+
+### What is a `venv`?
+
+A python virtual environment, allowing you to have project-specific dependencies.
+Create one thus:
+
+```bash
+python -m venv .venv
+```
+
+### What is `.venvrc`?
+
+A file the is sourced when your venv is activated. Typically placed in your project root.
+
+Add this to the end of your venv activate script (e.g. `.venv/Scripts/activate`):
+
+```bash
+if [ -f "$VIRTUAL_ENV/"../.venvrc ]; then
+  source "$VIRTUAL_ENV/"../.venvrc
+fi
+```

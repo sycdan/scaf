@@ -10,8 +10,9 @@ from scaf.tools import extract_first_dataclass
 class ActionPackage:
   """A domain action loaded from the filesystem."""
 
-  root: Path
-  """The root folder of the domain containing this action."""
+  class DoesNotExist(FileNotFoundError):
+    """Raised when the specified action package cannot be found."""
+
   action_folder: Path
   """Where `handler.py` is located."""
   init_module: ModuleType

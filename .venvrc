@@ -1,2 +1,2 @@
-eval "$(scaf .)"
+source .scaf/aliases
 alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'

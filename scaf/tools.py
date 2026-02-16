@@ -1,18 +1,15 @@
 """May touch filesystem, but not DB or network."""
 
-import os
+import logging
 import re
 from hashlib import sha256
 from pathlib import Path
 from types import ModuleType
+from typing import get_origin
 
+from scaf.config import SCAF_FOLDER_NAME
 
-def ensure_init_files(code_dir: Path):
-  """Ensure __init__.py files exist in all directories under code_dir."""
-  for root, dirs, _ in os.walk(code_dir):
-    for dir_name in dirs:
-      init_file = Path(root) / dir_name / "__init__.py"
-      init_file.touch(exist_ok=True)
+logger = logging.getLogger(__name__)
 
 
 def compute_hash(path: Path) -> str:
@@ -59,7 +56,34 @@ def extract_first_dataclass(module: ModuleType) -> type:
   raise ValueError(f"No dataclass found in {module.__file__}")
 
 
-def resolve_path(action_path: Path | str) -> Path:
-  if isinstance(action_path, str):
-    action_path = Path(action_path)
-  return action_path.resolve()
+def get_fitter(for_class: type, field_name: str):
+  try:
+    fields = for_class.__dataclass_fields__
+  except AttributeError:
+    logger.warning(f"Failed to get fitter for {field_name}. {for_class} is not a dataclass.")
+    return lambda x: x
+
+  try:
+    field = fields[field_name]
+  except KeyError:
+    logger.warning(f"Failed to get fitter for {field_name}. Field not found in {for_class}.")
+    return lambda x: x
+
+  if fitter := field.metadata.get("fitter", None):
+    return fitter
+
+  logger.debug(msg=f"No fitter defined for {field_name}; using simple type check")
+
+  def fit_by_type(value):
+    t = field.type
+    if origin_type := get_origin(t):  # Some sort of complex type, e.g. list[str]
+      t = origin_type  # Get the basic type
+    if not isinstance(value, t):
+      return t(value)
+    return value
+
+  return fit_by_type
+
+
+def get_scaf_folder(root: Path) -> Path:
+  return root / SCAF_FOLDER_NAME

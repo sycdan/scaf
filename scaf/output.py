@@ -1,4 +1,5 @@
 import json
+import logging
 import sys
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
@@ -13,25 +14,12 @@ YELLOW = "\033[1;33m"
 BLUE = "\033[0;34m"
 NC = "\033[0m"  # No Color
 
-
-def print_info(msg: str) -> None:
-  """Print status message in blue"""
-  print(f"{BLUE}► {NC} {msg}", file=sys.stderr)
+logger = logging.getLogger(__name__)
 
 
 def print_success(msg: str) -> None:
   """Print success message in green"""
   print(f"{GREEN}✓ {NC} {msg}", file=sys.stderr)
-
-
-def print_warning(msg: str) -> None:
-  """Print warning message in yellow to stderr"""
-  print(f"{YELLOW}⚠ {NC} {msg}", file=sys.stderr)
-
-
-def print_error(msg: str) -> None:
-  """Print error message in red to stderr"""
-  print(f"{RED}✗ {NC} {msg}", file=sys.stderr)
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -55,15 +43,15 @@ class JSONEncoder(json.JSONEncoder):
       return super().default(obj)
 
 
-def print_result(response) -> None:
+def print_result(result) -> None:
   """Print action response as JSON if possible, fallback to pprint if serialization fails."""
-  if response is None:
+  if result is None:
     return
 
   try:
-    json_output = json.dumps(response, cls=JSONEncoder, indent=2, ensure_ascii=False)
+    json_output = json.dumps(result, cls=JSONEncoder, indent=2, ensure_ascii=False)
     print(json_output)
   except (TypeError, ValueError) as e:
     # JSON serialization failed, fall back to pprint
-    print_warning(f"JSON serialization failed: {e}. Using pprint fallback.")
-    pprint(response)
+    logger.warning(f"JSON serialization failed: {e}. Using pprint fallback.")
+    pprint(result)

@@ -3,10 +3,11 @@ from dataclasses import dataclass
 
 @dataclass
 class BumpVersion:
-  """Command to bump the app version using YYYY.MM.DD.NNNN format.
+  """Bump the app version during a release.
 
   Automatically increments build number for same-day versions.
-  Idempotent - skips if last commit is already a version bump.
+  Creates a git tag for the version.
+  Idempotent - skips if HEAD is already tagged with a version.
   """
 
   def execute(self) -> str:

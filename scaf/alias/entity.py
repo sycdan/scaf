@@ -5,8 +5,33 @@ from pathlib import Path
 @dataclass
 class Alias:
   name: str
-  root: Path
   action: Path
+  root: Path
+
+  def __post_init__(self):
+    if not self.root.is_absolute():
+      raise ValueError("must be absolute")
+    if self.action.is_absolute():
+      raise ValueError("must be relative")
+
+  @classmethod
+  def from_bash(cls, raw: str, root: Path) -> "Alias":
+    # e.g.: alias domain.action='scaf call /home/mbd53/cyberdyne/skynet/up'
+    if not raw.startswith("alias "):
+      raise ValueError(f"Invalid alias format: {raw}")
+
+    raw = raw[6:]
+    name, scaf_command = raw.split("=", 1)
+    scaf_command = scaf_command.strip("'\"")
+
+    if not scaf_command.startswith("scaf call $DOMAIN_ROOT/"):
+      raise ValueError(f"Invalid alias command: {scaf_command}")
+
+    action = Path(scaf_command[23:])
+    return cls(name=name, action=action, root=root)
+
+  def to_bash(self) -> str:
+    return f'alias {self.name}="scaf call $DOMAIN_ROOT/{self.action.as_posix()}"'
 
   def __str__(self):
-    return f"alias {self.name}='scaf {self.root.as_posix()} --call {self.action.as_posix()} --'"
+    return self.name

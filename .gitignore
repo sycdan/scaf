@@ -6,11 +6,15 @@
 
 # Generated files.
 __pycache__/
-*.egg-info/
 .coverage
+.scaf/
 .temp/
 *_pb2.py
 *_pb2.pyi
+*.egg-info/
+build/
+dist/
+example/world/
 gen/
 htmlcov/
 scaf.venvrc

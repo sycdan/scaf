@@ -8,16 +8,17 @@ logger = logging.getLogger(__name__)
 
 
 def last_commit_is_version_bump() -> bool:
-  result = subprocess.run(["git", "log", "-1", "--pretty=%s"], capture_output=True, text=True)
+  """Returns true if HEAD has a version tag."""
+  result = subprocess.run(["git", "tag", "--points-at", "HEAD"], capture_output=True, text=True)
   if result.returncode:
-    logger.warning("Failed to get last commit")
+    logger.warning("Failed to get tags at HEAD")
     return False
 
-  last_commit_msg = result.stdout.strip()
-  # Check if it matches version format YYYY.MM.DD.NNNN
-  if re.match(r"^\d{4}\.\d{2}\.\d{2}\.\d{4}$", last_commit_msg):
-    logger.info("Version is up to date: %s", last_commit_msg)
-    return True
+  tags = result.stdout.strip().split("\n") if result.stdout.strip() else []
+
+  for tag in tags:
+    if re.match(r"^\d{4}\.\d{2}\.\d{2}\.\d{4}$", tag):
+      return True
 
   return False
 
@@ -25,35 +26,38 @@ def last_commit_is_version_bump() -> bool:
 def has_changes_since_last_version_bump(domain: str) -> bool:
   domain_path = f"{domain}/"
 
-  # Find the last version bump commit
+  # Find the last version tag (tags matching YYYY.MM.DD.NNNN format)
   result = subprocess.run(
-    [
-      "git",
-      "log",
-      "--grep=^[0-9]\\{4\\}\\.[0-9]\\{2\\}\\.[0-9]\\{2\\}\\.[0-9]\\{4\\}$",
-      "--pretty=%H",
-      "-1",
-    ],
+    ["git", "tag", "--list", "--sort=-version:refname"],
     capture_output=True,
     text=True,
   )
 
-  if result.returncode != 0 or not result.stdout.strip():
-    # No previous version bump found, check if domain folder exists and has any files
-    logger.info(
-      f"No previous version bump commit found, checking if {domain_path} folder has content"
-    )
+  if result.returncode != 0:
+    logger.warning("Failed to list tags")
+    return True  # Err on the side of caution
+
+  # Find the first tag matching version format
+  last_version_tag = None
+  if result.stdout.strip():
+    for tag in result.stdout.strip().split("\n"):
+      if re.match(r"^\d{4}\.\d{2}\.\d{2}\.\d{4}$", tag):
+        last_version_tag = tag
+        break
+
+  if not last_version_tag:
+    # No previous version tag found, check if domain folder exists and has any files
+    logger.info(f"No previous version tag found, checking if {domain_path} folder has content")
     domain_result = subprocess.run(
       ["git", "ls-files", domain_path], capture_output=True, text=True
     )
     return bool(domain_result.stdout.strip())
 
-  last_version_commit = result.stdout.strip()
-  logger.info(f"Last version bump commit: {last_version_commit}")
+  logger.info(f"Last version tag: {last_version_tag}")
 
-  # Check for changes in domain folder since that commit
+  # Check for changes in domain folder since that tag
   changes_result = subprocess.run(
-    ["git", "diff", "--name-only", last_version_commit + "..HEAD", domain_path],
+    ["git", "diff", "--name-only", last_version_tag + "..HEAD", domain_path],
     capture_output=True,
     text=True,
   )
@@ -76,7 +80,7 @@ def has_changes_since_last_version_bump(domain: str) -> bool:
 
 def handle(query: IsVersionBumpNeeded) -> bool:
   if last_commit_is_version_bump():
-    logger.info("Last commit is a version bump, version bump not needed")
+    logger.info("HEAD is tagged with a version, version bump not needed")
     return False
 
   if not query.remote_ref.endswith("/main"):
