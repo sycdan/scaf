@@ -7,13 +7,13 @@ name = "scaf"
 dynamic = ["version"]
 description = "Scaffolding tool & application framework for Python projects."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.14"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3.14",
 ]
-dependencies = ["Jinja2~=3.1"]
+dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "ruff", "vulture"]

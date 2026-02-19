@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class {{action_camel}}:
+class ${action_camel}:
   """Describe what the user is asking the domain to do, in imperative terms."""
   # """Greet the world."""
   # casual: bool = field(default=False, metadata={"help": "Skip formalities"})
@@ -10,5 +10,5 @@ class {{action_camel}}:
 
   @dataclass
   class Result:
-    """Define the shape of the value returned by {{action_camel}} below."""
+    """Define the shape of the value returned by ${action_camel} below."""
     # success: bool = field(metadata={"help": "Indicates if the command was successful"})

@@ -1,7 +1,0 @@
-SCAF_FOLDER="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-DOMAIN_ROOT="$(dirname -- "$SCAF_FOLDER")"
-
-# Scaf domain action aliases (added as actions are called):
-{% for alias in aliases -%}
-alias {{ alias.name }}="scaf call $DOMAIN_ROOT/{{ alias.action.as_posix() }}"
-{% endfor %}

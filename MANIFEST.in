@@ -1,2 +1,2 @@
 include README.md
-recursive-include scaf *.j2
+recursive-include scaf *.tmpl

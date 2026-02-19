@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
-
-from jinja2 import Template
+from string import Template
 
 from scaf.config import ALIASES_FILENAME
 from scaf.deck.entity import Deck
@@ -38,9 +37,9 @@ def ensure_aliases_file(deck: Deck, search_depth: int):
   logger.info("Gathering actions (if this takes too long, decrease search depth)...")
   result = Discover(deck=deck, depth=search_depth).execute()
 
-  tmpl_path = TEMPLATES_DIR / "aliases.j2"
-  tmpl = Template(tmpl_path.read_text(encoding="utf-8"))
-  content = tmpl.render(aliases=result.aliases)
+  aliases_block = "\n".join(alias.to_bash() for alias in result.aliases)
+  tmpl = Template((TEMPLATES_DIR / "aliases.tmpl").read_text(encoding="utf-8"))
+  content = tmpl.substitute(aliases_block=aliases_block)
 
   aliases_file.write_text(content, encoding="utf-8")
   logger.info(f"Created aliases file: {aliases_file}")

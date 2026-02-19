@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
-
-from jinja2 import Template
+from string import Template
 
 from scaf.action_package.create.command import CreateActionPackage
 from scaf.action_package.entity import ActionPackage
@@ -77,12 +76,9 @@ def ensure_logic_module(action_folder: Path, action_method: str, root: Path):
   if not created:
     return
 
-  tpl_path = TEMPLATES_DIR / "handler.py.j2"
-  tpl = Template(tpl_path.read_text(encoding="utf-8"))
-  content = tpl.render(
+  tpl = Template((TEMPLATES_DIR / "handler.py.tmpl").read_text(encoding="utf-8"))
+  content = tpl.substitute(
     action_method=action_method,
-    action_method_capitalize=action_method.capitalize(),
-    action_package=to_dot_path(logic_file.relative_to(root)),
     action_camel=to_camel_case(action_folder.name),
     action_dot_path=to_dot_path(action_folder.relative_to(root)),
   )
@@ -96,12 +92,9 @@ def ensure_shape_module(action_folder: Path, action_method: str):
   if not created:
     return
 
-  tpl_path = TEMPLATES_DIR / f"{action_method}.py.j2"
-  tpl = Template(tpl_path.read_text(encoding="utf-8"))
-  content = tpl.render(
-    action_camel=to_camel_case(action_folder.name),
-    action_method_capitalize=action_method.capitalize(),
-  )
+  action_camel = to_camel_case(action_folder.name)
+  tpl = Template((TEMPLATES_DIR / f"{action_method}.py.tmpl").read_text(encoding="utf-8"))
+  content = tpl.substitute(action_camel=action_camel)
   shape_file.write_text(content)
 
 
