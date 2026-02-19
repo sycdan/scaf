@@ -76,7 +76,7 @@ python -m venv .venv
 
 ### What is `.venvrc`?
 
-A file the is sourced when your venv is activated. Typically placed in your project root.
+A file intended to be sourced when your venv is activated. Typically placed in your project root.
 
 Add this to the end of your venv activate script (e.g. `.venv/Scripts/activate`):
 
