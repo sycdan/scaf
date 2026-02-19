@@ -13,7 +13,9 @@ def test_happy_path(sandbox: Sandbox):
   alias = sandbox.ensure_aliased("cyberdyne/skynet/defense/nuke/launch")
   assert alias.name == "cyberdyne.skynet.defense.nuke.launch"
 
-  assert sandbox.exists("cyberdyne/skynet/defense/nuke/entity.py"), "Expected action to exist after scaf call"
+  assert sandbox.exists("cyberdyne/skynet/defense/nuke/entity.py"), (
+    "Expected action to exist after scaf call"
+  )
 
 
 def test_relative_action_path_does_not_escape_cwd(sandbox: Sandbox):
