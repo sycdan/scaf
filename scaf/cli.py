@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import sys
 
 import scaf
@@ -31,7 +32,7 @@ def main(argv=None):
     help="Specify the command to execute. When calling an action, add -h for help.",
   )
   args, remaining = parser.parse_known_args(argv or sys.argv[1:])
-  configure_logging(args.verbose)
+  configure_logging(args.verbose or int(os.getenv("SCAF_VERBOSITY", 0)))
 
   if not (command := (args.command or "").strip().lower()):
     return parser.print_help()
