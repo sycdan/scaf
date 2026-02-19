@@ -66,6 +66,6 @@ def handle(command: Init):
     f"source {alias_file.relative_to(root).as_posix()}",
     r"alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'",
     "```",
-    "ℹ️  When you call an action with scaf.call, an alias for it will be added if not already present.",
+    "ℹ️  When you create an action with 'scaf call', an alias for it will be added if not already present.",
   ]
   print_success("\n".join(lines))
