@@ -7,11 +7,13 @@ from test.integration.conftest import Sandbox
 def test_happy_path(sandbox: Sandbox):
   sandbox.scaf_init()
 
-  # Call a non-existent action; this should cause the alias to be created
+  # Call a non-existent action; this should cause the alias to be created, and also the capable entity
   success, data = sandbox.scaf_call("cyberdyne/skynet/defense/nuke/launch")
   assert success
   alias = sandbox.ensure_aliased("cyberdyne/skynet/defense/nuke/launch")
   assert alias.name == "cyberdyne.skynet.defense.nuke.launch"
+
+  assert sandbox.exists("cyberdyne/skynet/defense/nuke/entity.py"), "Expected action to exist after scaf call"
 
 
 def test_relative_action_path_does_not_escape_cwd(sandbox: Sandbox):

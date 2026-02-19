@@ -5,6 +5,7 @@ from string import Template
 from scaf.action_package.create.command import CreateActionPackage
 from scaf.action_package.entity import ActionPackage
 from scaf.action_package.load.command import LoadActionPackage
+from scaf.action_package.rules import is_capable_entity
 from scaf.alias.entity import Alias
 from scaf.deck.entity import Deck
 from scaf.tools import to_camel_case, to_dot_path
@@ -98,6 +99,21 @@ def ensure_shape_module(action_folder: Path, action_method: str):
   shape_file.write_text(content)
 
 
+def ensure_entity_module(action_folder: Path, root: Path) -> None:
+  """Create entity.py in the capability folder if the action is a capable action."""
+  action = action_folder.relative_to(root)
+  if not is_capable_entity(action):
+    return
+  capability_folder = action_folder.parent
+  entity_file = capability_folder / "entity.py"
+  if entity_file.exists():
+    return
+  tpl = Template((TEMPLATES_DIR / "entity.py.tmpl").read_text(encoding="utf-8"))
+  content = tpl.substitute(capability_camel=to_camel_case(capability_folder.name))
+  entity_file.write_text(content)
+  logger.info(f"Created capable entity: {entity_file.relative_to(root)}")
+
+
 def add_alias(action_folder: Path, deck: Deck):
   alias_file = deck.aliases_file
   if not alias_file.exists():
@@ -124,5 +140,6 @@ def handle(command: CreateActionPackage) -> ActionPackage:
   action_folder = ensure_traversable_package(root, command.action)
   ensure_shape_module(action_folder, action_method)
   ensure_logic_module(action_folder, action_method, root)
+  ensure_entity_module(action_folder, root)
   add_alias(action_folder, deck)
   return LoadActionPackage(root=root, action=action_folder.relative_to(root)).execute()

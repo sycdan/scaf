@@ -2,6 +2,8 @@
 
 **Note:** Ignore commented blocks (surrounded by <!-- -->).
 
+**Note:** Always use TDD (write a failing test, then make it pass).
+
 ## Feature Requests
 
 

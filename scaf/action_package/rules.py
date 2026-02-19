@@ -1,5 +1,17 @@
+from pathlib import Path
+
 AND = "AND"
 OR = "OR"
+
+
+def is_capable_entity(action: Path) -> bool:
+  """Return True if the action represents an operation on a capable entity.
+
+  An action is 'capable' when its name is a single word (no underscores),
+  e.g. `load`, `get`, `launch`. In that case the immediate parent folder
+  is treated as the capable entity and deserves an entity.py.
+  """
+  return "_" not in action.name and len(action.parts) >= 2
 
 
 def must_contain_required_files(filenames: list[str] | set[str]) -> None:
