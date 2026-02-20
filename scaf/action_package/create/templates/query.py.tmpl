@@ -4,10 +4,10 @@ from dataclasses import dataclass, field
 @dataclass
 class ${action_camel}:
   """Describe what the user is asking the domain for."""
-  # pattern: str = field(default="", metadata={"help": "Only include things like this."})
-  # include_seen: bool = field(default=False, metadata={"help": "Show all the things."})
+  # pattern: str = field(default="", doc="Only include things like this.")
+  # include_seen: bool = field(default=False, doc="Show all the things.")
   
   @dataclass
   class Result:
     """Define the shape of the value returned by ${action_camel} below."""
-    # things: list[Thing] = field(metadata={"help": "The requested things."})
+    # things: list[Thing] = field(doc="The requested things.")

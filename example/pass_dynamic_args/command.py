@@ -6,7 +6,7 @@ class PassDynamicArgs:
   """Execute a tool call with dynamic arguments."""
 
   executable: str = field(
-    metadata={"help": "Path to executable"},
+    doc="Path to executable",
   )
 
   @dataclass

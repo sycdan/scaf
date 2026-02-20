@@ -14,4 +14,4 @@ class Test:
   class Result:
     """Define the shape of the value returned by Test below."""
 
-    success: bool = field(metadata={"help": "All tests passed without any failures."})
+    success: bool = field(doc="All tests passed without any failures.")
