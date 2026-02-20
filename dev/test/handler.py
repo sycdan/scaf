@@ -1,6 +1,4 @@
 import logging
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -17,7 +15,7 @@ def handle(command: Test, *things):
   pytest_args = ["--no-header", "--disable-warnings", "--tb=short", "-vvv", "-s"]
   if things:
     pytest_args += ["-k", " or ".join(things)]
-    
+
   try:
     result = pytest.main(pytest_args)
     print(f"{result=}")
