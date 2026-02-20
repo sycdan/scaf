@@ -70,17 +70,17 @@ def main():
   push_info = get_push_info()
 
   with Step(
-    "Checking if git hook is updated",
-    on_fail=lambda: "Run source dev/env.sh --nuke (unless you were working on the hook!)",
-  ):
-    if not IsGitHookUpdated(Path(__file__)).execute():
-      raise RuntimeError()
-
-  with Step(
     "Checking if working directory is clean",
     on_fail=lambda: "Commit or stash your changes",
   ):
     if not IsWorkingDirClean().execute():
+      raise RuntimeError()
+
+  with Step(
+    "Checking if git hook is updated",
+    on_fail=lambda: "Run source dev/env.sh --nuke",
+  ):
+    if not IsGitHookUpdated(Path(__file__)).execute():
       raise RuntimeError()
 
   with Step(
