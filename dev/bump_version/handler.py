@@ -68,8 +68,8 @@ def handle(command: BumpVersion) -> str:
     r'__version__ = ["\'][^"\']+["\']', f'__version__ = "{new_version}"', content
   )
 
-  with open(init_file, "w") as f:
-    f.write(new_content)
+  with open(init_file, "w", newline="") as f:
+    f.write(new_content.strip() + "\n")
 
   run_command(["git", "add", "scaf/__init__.py"], "Staging version update")
   run_command(["git", "commit", "-m", "Bump version"], "Committing version update")
