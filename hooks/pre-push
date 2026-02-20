@@ -67,9 +67,11 @@ def main():
   from dev.check.is_version_bump_needed.query import IsVersionBumpNeeded
   from dev.check.is_working_dir_clean.query import IsWorkingDirClean
 
+  push_info = get_push_info()
+
   with Step(
     "Checking if git hook is updated",
-    on_fail=lambda: "Run source dev/env.sh --nuke",
+    on_fail=lambda: "Run source dev/env.sh --nuke (unless you were working on the hook!)",
   ):
     if not IsGitHookUpdated(Path(__file__)).execute():
       raise RuntimeError()
@@ -99,7 +101,7 @@ def main():
     "Checking if version bump is needed",
     on_fail=lambda: "Run dev.bump-version",
   ):
-    if IsVersionBumpNeeded(*get_push_info()).execute():
+    if IsVersionBumpNeeded(*push_info).execute():
       raise RuntimeError()
 
 
