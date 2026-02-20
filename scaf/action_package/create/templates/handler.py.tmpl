@@ -10,5 +10,5 @@ ACTION_DIR = Path(__file__).parent
 
 def handle(${action_method}: ${action_camel}) -> ${action_camel}.Result:
   logger.debug(f"Handling {${action_method}=}")
-  logger.error(f"Logic for the ${action_camel} ${action_method} must be defined in {ACTION_DIR.as_posix()}/{Path(__file__).name}")
+  logger.warning(f"Logic for the ${action_camel} ${action_method} must be defined in {ACTION_DIR.as_posix()}/{Path(__file__).name}")
   return ${action_camel}.Result()

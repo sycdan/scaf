@@ -53,7 +53,7 @@ source dev/env.sh [--nuke]
 Edit your `.scaf/aliases` file:
 
 ```bash
-alias domain.action="scaf --vvv call $DOMAIN_ROOT/domain/action"
+alias domain.action="scaf --vvv call $DECK/domain/action"
 #                         ^ add this
 ```
 

@@ -94,7 +94,7 @@ def generate_action_aliases(root: Path, actions: list[Path], filter="") -> list[
     try:
       ap = LoadActionPackage(root=root, action=action).execute()
     except Exception as e:
-      logger.error("Failed to load action package %s: %s", action, e)
+      logger.warning("Failed to load action package %s: %s", action, e)
       continue
 
     alias_name = generate_alias_name(root, ap)

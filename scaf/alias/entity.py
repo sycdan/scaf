@@ -24,14 +24,14 @@ class Alias:
     name, scaf_command = raw.split("=", 1)
     scaf_command = scaf_command.strip("'\"")
 
-    if not scaf_command.startswith("scaf call $DOMAIN_ROOT/"):
+    if not scaf_command.startswith("scaf call $DECK/"):
       raise ValueError(f"Invalid alias command: {scaf_command}")
 
-    action = Path(scaf_command[23:])
+    action = Path(scaf_command[16:])
     return cls(name=name, action=action, root=root)
 
   def to_bash(self) -> str:
-    return f'alias {self.name}="scaf call $DOMAIN_ROOT/{self.action.as_posix()}"'
+    return f'alias {self.name}="scaf call $DECK/{self.action.as_posix()}"'
 
   def __str__(self):
     return self.name
