@@ -79,7 +79,7 @@ class Sandbox:
       f"Alias for action '{action}' not found in {scaf_root} (searched {len(aliases)} aliases)"
     )
 
-  def _scaf(self, *args):
+  def scaf(self, *args):
     from scaf.cli import main
 
     stdout = io.StringIO()
@@ -94,14 +94,14 @@ class Sandbox:
     return success, stdout.getvalue(), stderr.getvalue()
 
   def scaf_init(self, search_depth: int = 0):
-    result = self._scaf("init", str(search_depth))
+    result = self.scaf("init", str(search_depth))
     return result[0]
 
   def scaf_call(self, action: Path | str, *action_args):
     """Call an action with scaf and return the parsed JSON output."""
     if isinstance(action, Path):
       action = action.as_posix()
-    result = self._scaf("call", action, *action_args)
+    result = self.scaf("call", action, *action_args)
     output = result[1]
     if output.strip():
       return result[0], json.loads(output)

@@ -7,6 +7,7 @@ import scaf
 from scaf.config import configure_logging
 from scaf.output import print_result
 from scaf.user.call.command import Call
+from scaf.user.config.set.command import SetConfig
 from scaf.user.init.command import Init
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ def main(argv=None):
   )
   parser.add_argument(
     "command",
-    choices=["init", "version", "call"],
+    choices=["init", "version", "call", "config"],
     nargs="?",
     help="Specify the command to execute. When calling an action, add -h for help.",
   )
@@ -47,6 +48,22 @@ def main(argv=None):
       return Init(**init_kwargs).execute()
     if command == "version":
       return print(scaf.__version__)
+    if command == "config":
+      subcommand = remaining.pop(0) if remaining else ""
+      if subcommand == "set":
+        set_config_kwargs = {}
+        try:
+          set_config_kwargs.update(
+            {
+              "domain": remaining[0],
+              "setting": remaining[1],
+              "value": remaining[2],
+            }
+          )
+        except IndexError:
+          raise ValueError("Usage: scaf config set <domain> <setting> <value>")
+        return SetConfig(**set_config_kwargs).execute()
+      raise ValueError(f"Unknown config subcommand: {subcommand!r}. Available: set")
     if command == "call":
       call_kwargs = {}
       try:

@@ -9,6 +9,7 @@ from types import ModuleType
 from typing import get_origin
 
 from scaf.config import SCAF_FOLDER_NAME
+from scaf.output import JSONEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -102,4 +103,4 @@ def read_json_file(path: Path) -> dict:
 
 
 def write_json_file(path: Path, data: dict) -> None:
-  path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+  path.write_text(json.dumps(data, indent=2, cls=JSONEncoder) + "\n", encoding="utf-8")

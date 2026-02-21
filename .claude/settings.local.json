@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(pytest:*)",
-      "Bash(scaf call:*)"
+      "Bash(scaf call:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

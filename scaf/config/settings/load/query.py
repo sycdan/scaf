@@ -16,6 +16,6 @@ class LoadSettings:
     values_must_fit(self)
 
   def execute(self):
-    from scaf.config.load_settings.handler import handle
+    from scaf.config.settings.load.handler import handle
 
     return handle(self)

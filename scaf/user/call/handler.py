@@ -22,8 +22,7 @@ def ensure_import_path(deck: Deck):
 def handle(command: Call, *action_args):
   action = command.action
 
-  if not (deck := LocateDeck(path=action).execute()):
-    raise RuntimeError("No scaf deck found. Run 'scaf init' first.")
+  deck = LocateDeck(path=action).execute()
   ensure_import_path(deck)
 
   root = deck.root

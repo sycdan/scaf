@@ -1,23 +1,13 @@
 import logging
 from dataclasses import fields, replace
 from pathlib import Path
-from types import ModuleType
 
-from scaf.action_package.load.handler import _load_module_from_file
-from scaf.config.load_settings.query import LoadSettings
-from scaf.deck.entity import Deck
+from scaf.config.settings.load.query import LoadSettings
+from scaf.config.settings.tools import get_settings_class
 from scaf.deck.locate.command import LocateDeck
 from scaf.tools import read_json_file
 
 logger = logging.getLogger(__name__)
-
-
-def _load_settings_module(deck: Deck, domain: Path) -> ModuleType:
-  settings_module_file = deck.root / domain / "settings.py"
-  if settings_module_file.exists():
-    logger.debug("Loading domain settings: %s", settings_module_file)
-    return _load_module_from_file(settings_module_file)
-  raise ValueError(f"No settings.py found for domain '{domain}'")
 
 
 def handle(query: LoadSettings):
@@ -28,12 +18,9 @@ def handle(query: LoadSettings):
     domain = Path.cwd() / domain
 
   deck = LocateDeck(path=domain).execute()
-  if deck is None:
-    raise RuntimeError("No scaf deck found. Run 'scaf init' first.")
-
   domain_rel = domain.relative_to(deck.root)
-  module = _load_settings_module(deck, domain_rel)
-  cls = module.Settings
+  if not (cls := get_settings_class(deck.root, domain_rel)):
+    return None
   defaults = cls()
 
   data = read_json_file(deck.settings_file)

@@ -16,4 +16,4 @@ def handle(command: LocateDeck):
     if scaf_folder.exists() and scaf_folder.is_dir():
       logger.info(f"Found deck at {scaf_folder.parent.as_posix()}")
       return Deck(root=scaf_folder.parent)
-  return None
+  raise RuntimeError("No scaf deck found. Run 'scaf init' first.")
