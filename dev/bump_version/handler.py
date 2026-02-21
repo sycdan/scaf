@@ -73,10 +73,6 @@ def handle(command: BumpVersion) -> str:
 
   run_command(["git", "add", "scaf/__init__.py"], "Staging version update")
   run_command(["git", "commit", "-m", "Bump version"], "Committing version update")
-  run_command(
-    ["git", "tag", "-a", new_version, "-m", f"Release {new_version}"],
-    "Creating version tag",
-  )
 
   print(f"✅ Version updated to {new_version}")
   return new_version

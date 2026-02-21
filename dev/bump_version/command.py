@@ -3,11 +3,10 @@ from dataclasses import dataclass
 
 @dataclass
 class BumpVersion:
-  """Bump the app version during a release.
+  """Bump the app version prior to a release.
 
   Automatically increments build number for same-day versions.
-  Creates a git tag for the version.
-  Idempotent - skips if HEAD is already tagged with a version.
+  Idempotent - skips if HEAD is already a version bump commit.
   """
 
   def execute(self) -> str:
