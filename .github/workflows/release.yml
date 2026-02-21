@@ -22,11 +22,7 @@ jobs:
             exit 0
           fi
           if git diff HEAD~1 HEAD -- scaf/__init__.py | grep -q '^+__version__'; then
-            VERSION=$(python3 -c "
-import re
-content = open('scaf/__init__.py').read()
-print(re.search(r'__version__ = [\"\'](.*?)[\"\'']', content).group(1))
-")
+            VERSION=$(python3 -c "exec(open('scaf/__init__.py').read()); print(__version__)")
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           fi
 
