@@ -31,6 +31,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
           VERSION="${{ steps.version.outputs.version }}"
           BUMP_COMMIT=$(git log -1 --format=%H -- scaf/__init__.py)
           git tag -a "$VERSION" "$BUMP_COMMIT" -m "Release $VERSION"
