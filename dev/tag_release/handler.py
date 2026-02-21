@@ -32,13 +32,28 @@ def last_version_bump_commit() -> str | None:
 
 
 def tag_exists_at(version: str, commit: str) -> bool:
-  result = subprocess.run(
-    ["git", "tag", "--points-at", commit],
+  """Returns True if the tag exists and points to the expected commit. Raises if it points elsewhere."""
+  exists = subprocess.run(
+    ["git", "tag", "--list", version],
     capture_output=True,
     text=True,
     encoding="utf-8",
   )
-  return version in result.stdout.strip().split("\n")
+  if not exists.stdout.strip():
+    return False
+
+  points_to = subprocess.run(
+    ["git", "rev-parse", f"{version}^{{}}"],
+    capture_output=True,
+    text=True,
+    encoding="utf-8",
+  )
+  tagged_commit = points_to.stdout.strip()
+  if tagged_commit != commit:
+    raise RuntimeError(
+      f"Tag {version} already exists but points to {tagged_commit[:7]}, expected {commit[:7]}"
+    )
+  return True
 
 
 def run(cmd, description):
