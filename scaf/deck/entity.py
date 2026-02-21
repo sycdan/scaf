@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 
-from scaf.config import ALIASES_FILENAME, SCAF_FOLDER_NAME
+from scaf.config import ALIASES_FILENAME, SCAF_FOLDER_NAME, SETTINGS_FILENAME
 from scaf.deck.rules import fit_root, must_be_real_dir
 from scaf.rules import values_must_fit
 
@@ -23,6 +23,10 @@ class Deck:
   @cached_property
   def aliases_file(self) -> Path:
     return self.scaf_folder / ALIASES_FILENAME
+
+  @cached_property
+  def settings_file(self) -> Path:
+    return self.scaf_folder / SETTINGS_FILENAME
 
   def __post_init__(self):
     values_must_fit(self)

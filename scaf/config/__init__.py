@@ -8,6 +8,7 @@ REPO_ROOT = Path(__file__).parent.parent.parent
 """for internal use only -- should never change"""
 SCAF_FOLDER_NAME = ".scaf"
 ALIASES_FILENAME = "aliases"
+SETTINGS_FILENAME = "settings.json"
 
 
 def configure_logging(verbosity: int):
