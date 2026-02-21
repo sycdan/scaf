@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect version bump
+        id: version
+        run: |
+          if ! git rev-parse HEAD~1 > /dev/null 2>&1; then
+            exit 0
+          fi
+          if git diff HEAD~1 HEAD -- scaf/__init__.py | grep -q '^+__version__'; then
+            VERSION=$(python3 -c "
+import re
+content = open('scaf/__init__.py').read()
+print(re.search(r'__version__ = [\"\'](.*?)[\"\'']', content).group(1))
+")
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Tag and release
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BUMP_COMMIT=$(git log -1 --format=%H -- scaf/__init__.py)
+          git tag -a "$VERSION" "$BUMP_COMMIT" -m "Release $VERSION"
+          git push origin "$VERSION"
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --generate-notes \
+            --target "$BUMP_COMMIT"
