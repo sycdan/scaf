@@ -1,5 +1,6 @@
 """May touch filesystem, but not DB or network."""
 
+import json
 import logging
 import re
 from hashlib import sha256
@@ -87,3 +88,18 @@ def get_fitter(for_class: type, field_name: str):
 
 def get_scaf_folder(root: Path) -> Path:
   return root / SCAF_FOLDER_NAME
+
+
+def read_json_file(path: Path) -> dict:
+  if not path.exists():
+    return {}
+
+  try:
+    return json.loads(path.read_text(encoding="utf-8"))
+  except json.JSONDecodeError as e:
+    logger.error(f"Failed to parse JSON file at {path}: {e}")
+    return {}
+
+
+def write_json_file(path: Path, data: dict) -> None:
+  path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
