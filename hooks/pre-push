@@ -99,7 +99,7 @@ def main():
 
   with Step(
     "Checking if version bump is needed",
-    on_fail=lambda: "Run dev.bump-version",
+    on_fail=lambda: "Run scaf call dev/bump_version",
   ):
     if IsVersionBumpNeeded(*push_info).execute():
       raise RuntimeError()
