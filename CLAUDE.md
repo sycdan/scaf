@@ -89,6 +89,8 @@ The scaf package itself follows the same domain-action pattern:
 
 ### Testing
 
+All features must be built with TDD: write the integration test first (confirm it fails), then implement until it passes.
+
 Tests live in `test/unit/` and `test/integration/`. Integration tests use a sandbox fixture (temp directory). Regression tests for bugs go in `test/integration/bug/` with timestamp-based names. The `example/` directory contains test domain actions used by integration tests.
 
 ## Code Style
