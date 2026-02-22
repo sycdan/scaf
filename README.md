@@ -38,6 +38,8 @@ scaf call example/world/greet
 
 Keep dependencies to a minimum.
 
+Use **2-space indentation** in all Python files. Scaf's generated templates use 2-space indent, so consistency matters.
+
 ### Environment Setup
 
 ```bash

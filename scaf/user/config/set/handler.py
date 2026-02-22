@@ -2,6 +2,7 @@ import logging
 from dataclasses import fields
 from pathlib import Path
 
+from scaf.config.settings.seed.command import SeedSettings
 from scaf.config.settings.tools import get_settings_class
 from scaf.deck.locate.command import LocateDeck
 from scaf.output import print_success
@@ -21,8 +22,21 @@ def handle(command: SetConfig):
   deck = LocateDeck(path=domain).execute()
   domain_rel = domain.relative_to(deck.root)
 
-  if not (cls := get_settings_class(deck.root, domain_rel)):
-    raise RuntimeError(f"No settings class found for domain '{domain_rel}'")  # TODO seed
+  cls = get_settings_class(deck.root, domain_rel)
+  if not cls:
+    SeedSettings(
+      domain_path=deck.root / domain_rel, setting=command.setting, value=command.value
+    ).execute()
+    data = read_json_file(deck.settings_file)
+    node = data
+    for part in domain_rel.parts:
+      node = node.setdefault(part, {})
+    node[command.setting] = command.value
+    write_json_file(deck.settings_file, data)
+    print_success(
+      f"Created settings for {domain_rel} and set {command.setting} = {command.value!r}"
+    )
+    return
 
   known = {f.name: f for f in fields(cls)}
   if command.setting not in known:

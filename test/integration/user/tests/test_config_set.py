@@ -86,10 +86,17 @@ def test_fails_without_deck(sandbox: Sandbox):
   assert not success
 
 
-def test_fails_without_settings_module(sandbox: Sandbox):
+def test_creates_settings_file_when_missing(sandbox: Sandbox):
   sandbox.add_example_domain()
   sandbox.scaf_init()
 
-  # exists but has no settings.py
-  success, _, _ = sandbox.scaf("config", "set", "example/myriad", "host", "localhost")
-  assert not success
+  assert not sandbox.exists("example/myriad/settings.py")
+  success, _, _ = sandbox.scaf("config", "set", "example/myriad", "fake", "value")
+  assert success
+
+  assert sandbox.exists("example/myriad/settings.py")
+  content = sandbox.read("example/myriad/settings.py")
+  assert "fake" in content
+
+  data = json.loads(sandbox.read(".scaf/settings.json"))
+  assert data["example"]["myriad"]["fake"] == "value"
