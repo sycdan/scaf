@@ -16,10 +16,10 @@ def handle(command: SetConfig):
   logger.debug(f"Handling {command=}")
 
   domain = command.domain.expanduser()
-  if not domain.is_absolute():
-    domain = Path.cwd() / domain
-
   deck = LocateDeck(path=domain).execute()
+
+  if not domain.is_absolute():
+    domain = (Path.cwd() / domain).resolve()
   domain_rel = domain.relative_to(deck.root)
 
   cls = get_settings_class(deck.root, domain_rel)
