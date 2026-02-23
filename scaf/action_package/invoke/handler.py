@@ -1,32 +1,12 @@
 import argparse
 import dataclasses
 import logging
-import typing
 from pathlib import Path
-from typing import get_args, get_origin
 
 from scaf.action_package.invoke.command import InvokeActionPackage
-from scaf.tools import to_slug_case
+from scaf.tools import get_acceptable_types, get_fitter, to_slug_case
 
 logger = logging.getLogger(__name__)
-
-
-def normalize_argparse_type(t):
-  logger.debug(msg=f"Normalizing type {t} for argparse")
-  origin = get_origin(t)
-
-  # Optional[T] or Union[T, None]
-  if origin is typing.Union:
-    logger.debug(f"{origin=}")
-    types = [a for a in get_args(t) if a is not type(None)]
-    if len(types) > 0:
-      return normalize_argparse_type(types[-1])
-
-    # fallback to string
-    return str
-
-  # bare type
-  return t
 
 
 def build_parser_from_shape(shape_class: type, description: str):
@@ -40,21 +20,22 @@ def build_parser_from_shape(shape_class: type, description: str):
       f"Processing field {field.name} of type {field.type} with default {field.default}"
     )
     name = field.name
-    type_ = normalize_argparse_type(field.type)
-    logger.debug(f"Normalized type for field '{name}': {type_}")
+    t, _, _ = get_acceptable_types(field)
+    fitter = get_fitter(shape_class, name)
     default = field.default
+    help = field.doc or ""
 
     if default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING:
       # required positional
-      parser.add_argument(name, type=type_)
+      parser.add_argument(name, type=fitter, help=help)
     else:
       # optional with default or default_factory
       flag_name = to_slug_case(name)
-      if type_ is bool:
+      if t is bool:
         # For bool fields, use the default or False if default_factory
         effective_default = default if default is not dataclasses.MISSING else False
         parser.add_argument(
-          f"--{flag_name}", action="store_true", default=effective_default, dest=name
+          f"--{flag_name}", action="store_true", default=effective_default, dest=name, help=help
         )
       else:
         # For non-bool fields, use the default or call default_factory if available
@@ -63,7 +44,9 @@ def build_parser_from_shape(shape_class: type, description: str):
         else:
           # default_factory exists, call it to get the default value
           effective_default = field.default_factory()  # type: ignore
-        parser.add_argument(f"--{flag_name}", type=type_, default=effective_default, dest=name)
+        parser.add_argument(
+          f"--{flag_name}", type=fitter, default=effective_default, dest=name, help=help
+        )
 
   return parser
 
@@ -71,16 +54,17 @@ def build_parser_from_shape(shape_class: type, description: str):
 def handle(command: InvokeActionPackage):
   logger.debug(f"Handling {command=}")
 
-  domain_action = command.action_package
-  description = domain_action.shape_module.__doc__ or "Do the thing."
+  action_package = command.action_package
+  action_folder = action_package.action_folder
+  shape_class = action_package.shape_class
 
-  shape_class = domain_action.shape_class
+  description = shape_class.__doc__ or action_package.shape_module.__doc__ or "Do the thing."
   action_parser = build_parser_from_shape(shape_class, description=description)
 
-  if command.action_package.action_folder.is_relative_to(Path.cwd()):
-    action_path = domain_action.action_folder.relative_to(Path.cwd())
+  if action_folder.is_relative_to(Path.cwd()):
+    action_path = action_folder.relative_to(Path.cwd())
   else:
-    action_path = domain_action.action_folder
+    action_path = action_folder
   action_parser.prog = f"scaf call {action_path.as_posix()}"
 
   try:
@@ -91,4 +75,4 @@ def handle(command: InvokeActionPackage):
     raise RuntimeError("Invalid action arguments.")
 
   action = shape_class(**vars(args))
-  return domain_action.logic_module.handle(action, *extra_args)
+  return action_package.logic_module.handle(action, *extra_args)

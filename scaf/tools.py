@@ -3,15 +3,60 @@
 import json
 import logging
 import re
+import types
+import typing
+from dataclasses import Field
+from datetime import datetime
 from hashlib import sha256
 from pathlib import Path
 from types import ModuleType
-from typing import get_origin
+from typing import get_args, get_origin
+from zoneinfo import ZoneInfo
 
 from scaf.config import SCAF_FOLDER_NAME
 from scaf.output import JSONEncoder
 
 logger = logging.getLogger(__name__)
+
+_UTC = ZoneInfo("UTC")
+
+
+def _local_timezone() -> ZoneInfo:
+  """Detect the system local timezone, falling back to UTC with a warning."""
+  try:
+    return ZoneInfo("localtime")
+  except Exception:
+    logger.warning("Could not detect local timezone; defaulting to UTC")
+    return _UTC
+
+
+def parse_datetime(when: datetime | str, where: ZoneInfo | str | None = None) -> datetime:
+  """Parse a datetime from a string or datetime, applying timezone if naive.
+
+  If `where` is None, the system local timezone is used (UTC with a warning if
+  the local timezone cannot be detected).
+
+  Raises ValueError for unparseable strings or invalid timezone names.
+  """
+  if not where:
+    where = _local_timezone()
+
+  try:
+    if not isinstance(where, ZoneInfo):
+      where = ZoneInfo(where.strip())
+  except Exception as e:
+    raise ValueError(f"Invalid timezone: {where}") from e
+
+  try:
+    if not isinstance(when, datetime):
+      when = datetime.fromisoformat(when.strip().replace("Z", "+00:00"))
+  except Exception as e:
+    raise ValueError(f"Invalid datetime: {when}") from e
+
+  if when.tzinfo is None:
+    when = when.replace(tzinfo=where)
+
+  return when.astimezone(tz=where)
 
 
 def compute_hash(path: Path) -> str:
@@ -58,6 +103,35 @@ def extract_first_dataclass(module: ModuleType) -> type:
   raise ValueError(f"No dataclass found in {module.__file__}")
 
 
+def get_acceptable_types(field: Field):
+  """Returns (`canonical_type`, `proxy_type`, `optional`) for a dataclass field.
+
+  `canonical_type`:
+    The primary type expected by the internal domain.
+  `proxy_type`:
+    A type the domain can use to construct the canonical type from a single string input.
+    If the type definition is not a Union, this will be the same as `canonical_type`.
+  `optional`:
+    Whether the field can be None.
+
+  Examples:
+    - `x: MyDomainType` -> `canonical_type` = `proxy_type` = `MyDomainType`.
+    - `x: MyDomainType | MyDomainTypeRef` -> `canonical_type` = `MyDomainType`; `proxy_type` = `MyDomainTypeRef`.
+    - `x: MyDomainTypeRef | None` -> `canonical_type` = `proxy_type` = `MyDomainTypeRef`; `optional` = True.
+  """
+  t = field.type
+
+  if isinstance(t, types.UnionType) or get_origin(t) is typing.Union:
+    args = get_args(t)
+    optional = type(None) in args
+    non_none_types = [a for a in args if a is not type(None)]
+    canonical_type = non_none_types[0]
+    proxy_type = non_none_types[-1]
+    return canonical_type, proxy_type, optional
+
+  return t, t, False
+
+
 def get_fitter(for_class: type, field_name: str):
   try:
     fields = for_class.__dataclass_fields__
@@ -77,12 +151,27 @@ def get_fitter(for_class: type, field_name: str):
   logger.debug(msg=f"No fitter defined for {field_name}; using simple type check")
 
   def fit_by_type(value):
-    t = field.type
-    if origin_type := get_origin(t):  # Some sort of complex type, e.g. list[str]
-      t = origin_type  # Get the basic type
-    if not isinstance(value, t):
-      return t(value)
-    return value
+    domain_type, proxy_type, optional = get_acceptable_types(field)
+
+    if value is None:
+      if optional:
+        return None
+      else:
+        raise ValueError(f"{field_name} cannot be None")
+
+    if not isinstance(domain_type, type):
+      logger.warning(f"Unable to infer domain type for {field_name}. Skipping fitting.")
+      return value
+
+    if origin_type := get_origin(domain_type):  # e.g. list[str]
+      domain_type = origin_type
+
+    if isinstance(value, domain_type):
+      return value
+    elif domain_type is datetime:
+      return parse_datetime(value)
+
+    return proxy_type(value)  # type: ignore
 
   return fit_by_type
 
