@@ -6,7 +6,7 @@ import re
 import types
 import typing
 from dataclasses import Field
-from datetime import datetime
+from datetime import date, datetime, time
 from hashlib import sha256
 from pathlib import Path
 from types import ModuleType
@@ -49,7 +49,13 @@ def parse_datetime(when: datetime | str, where: ZoneInfo | str | None = None) ->
 
   try:
     if not isinstance(when, datetime):
-      when = datetime.fromisoformat(when.strip().replace("Z", "+00:00"))
+      s = when.strip().replace("Z", "+00:00")
+      try:
+        when = datetime.fromisoformat(s)
+      except ValueError:
+        # Try parsing as a time-only string and assume today's date
+        t = time.fromisoformat(s)
+        when = datetime.combine(date.today(), t)
   except Exception as e:
     raise ValueError(f"Invalid datetime: {when}") from e
 

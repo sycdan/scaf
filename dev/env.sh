@@ -39,7 +39,16 @@ pip install -e .[dev] || {
 }
 
 echo "🪜  Upgrading pip..."
-python -m pip install --upgrade pip >/dev/null 2>&1
+python -m pip install --upgrade pip >/dev/null 2>&1 || {
+  echo "⚠️  Failed to upgrade pip"
+}
+
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" || -n "${WINDIR:-}" ]]; then
+  echo "🪜  Windows detected — installing tzdata for ZoneInfo support..."
+  pip install tzdata >/dev/null 2>&1 || {
+    echo "⚠️  Failed to install tzdata (ZoneInfo timezone lookups may fail)"
+  }
+fi
 
 echo "🪜  Setting up git hooks..."
 if [ -d ".git" ]; then
