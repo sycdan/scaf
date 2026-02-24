@@ -1,5 +1,6 @@
 import argparse
 import dataclasses
+import inspect
 import logging
 from pathlib import Path
 
@@ -75,4 +76,13 @@ def handle(command: InvokeActionPackage):
     raise RuntimeError("Invalid action arguments.")
 
   action = shape_class(**vars(args))
+
+  if extra_args:
+    sig = inspect.signature(action_package.logic_module.handle)
+    accepts_var_positional = any(
+      p.kind == inspect.Parameter.VAR_POSITIONAL for p in sig.parameters.values()
+    )
+    if not accepts_var_positional:
+      raise RuntimeError(f"Unexpected arguments: {extra_args}")
+
   return action_package.logic_module.handle(action, *extra_args)
