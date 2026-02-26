@@ -3,11 +3,11 @@ from pathlib import Path
 
 from scaf.action_package.create.rules import fit_action, fit_description, fit_method
 from scaf.deck.entity import Deck
-from scaf.rules import values_must_fit
+from scaf.core import Shape
 
 
 @dataclass
-class CreateActionPackage:
+class CreateActionPackage(Shape):
   """Create a new domain action."""
 
   deck: Deck = field(
@@ -27,9 +27,6 @@ class CreateActionPackage:
     default="",
     metadata={"fitter": fit_description},
   )
-
-  def __post_init__(self):
-    values_must_fit(self)
 
   def execute(self):
     from scaf.action_package.create.handler import handle

@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from uuid import UUID
 
+from scaf.core import Shape
+
 
 @dataclass
 class Entity:
@@ -8,11 +10,11 @@ class Entity:
 
 
 @dataclass
-class EntityRef:
+class EntityRef(Shape):
   key: str
   guid: UUID = field(init=False)
 
-  def __post_init__(self):
+  def prepare(self):
     self.guid = UUID(self.key[7:])
 
   def hydrate(self) -> Entity:

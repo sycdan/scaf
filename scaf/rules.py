@@ -13,7 +13,9 @@ def values_must_fit(instance: object):
   except AttributeError:
     raise TypeError(f"{data_class} is not a dataclass")
 
-  for field_name in fields.keys():
+  for field_name, field in fields.items():
+    if not field.init:
+      continue
     if fitter := get_fitter(data_class, field_name):
       value = instance.__dict__[field_name]
       try:

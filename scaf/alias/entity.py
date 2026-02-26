@@ -1,14 +1,16 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from scaf.core import Shape
+
 
 @dataclass
-class Alias:
+class Alias(Shape):
   name: str
   action: Path
   root: Path
 
-  def __post_init__(self):
+  def prepare(self):
     if not self.root.is_absolute():
       raise ValueError("must be absolute")
     if self.action.is_absolute():

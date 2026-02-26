@@ -4,11 +4,11 @@ from pathlib import Path
 
 from scaf.config import ALIASES_FILENAME, SCAF_FOLDER_NAME, SETTINGS_FILENAME
 from scaf.deck.rules import fit_root, must_be_real_dir
-from scaf.rules import values_must_fit
+from scaf.core import Shape
 
 
 @dataclass
-class Deck:
+class Deck(Shape):
   """Represents a location where scaf has been initialized, and provides access to its configuration files."""
 
   root: Path = field(
@@ -28,6 +28,5 @@ class Deck:
   def settings_file(self) -> Path:
     return self.scaf_folder / SETTINGS_FILENAME
 
-  def __post_init__(self):
-    values_must_fit(self)
+  def prepare(self):
     must_be_real_dir(self.scaf_folder)
