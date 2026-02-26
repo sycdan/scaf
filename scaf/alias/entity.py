@@ -12,9 +12,9 @@ class Alias(Shape):
 
   def prepare(self):
     if not self.root.is_absolute():
-      raise ValueError("must be absolute")
+      raise ValueError("root must be absolute")
     if self.action.is_absolute():
-      raise ValueError("must be relative")
+      raise ValueError("action must be relative")
 
   @classmethod
   def from_bash(cls, raw: str, root: Path) -> "Alias":

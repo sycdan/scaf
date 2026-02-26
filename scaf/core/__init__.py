@@ -1,1 +1,1 @@
-from scaf.shape.entity.shape import Shape  # noqa
+from scaf.shape.base import Shape  # noqa
