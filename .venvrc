@@ -1,2 +1,7 @@
 source .scaf/aliases
 alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'
+
+echo ""
+echo "git:"
+git remote -v
+echo "latest commit: $(git log -1 --pretty=format:'%h - %s (%ci) <%an>')"
