@@ -19,7 +19,7 @@ def ensure_import_path(deck: Deck):
     sys.path.insert(0, root)
 
 
-def handle(command: Call, *action_args):
+def handle(command: Call):
   action = command.action
 
   deck = LocateDeck(path=action).execute()
@@ -37,4 +37,4 @@ def handle(command: Call, *action_args):
     action_package = LoadActionPackage(root=root, action=action).execute()
   except ActionPackage.DoesNotExist:
     action_package = CreateActionPackage(deck=deck, action=action).execute()
-  return InvokeActionPackage(action_package, list(action_args)).execute()
+  return InvokeActionPackage(action_package, command.args).execute()

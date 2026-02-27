@@ -38,14 +38,26 @@ def main(argv=None):
   if not (command := (args.command or "").strip().lower()):
     return parser.print_help()
 
+  show_scaf_help = remaining and remaining[0] in ("--help", "-h")
+
   try:
     if command == "init":
-      init_kwargs = {}
-      try:
-        init_kwargs["search_depth"] = remaining.pop(0)
-      except IndexError:
-        pass
-      return Init(**init_kwargs).execute()
+      init_parser = argparse.ArgumentParser(
+        description="Initialize a scaf deck in the working directory.",
+        prog="scaf init",
+      )
+      init_parser.add_argument(
+        "search_depth",
+        nargs="?",
+        type=int,
+        default=0,
+        help="How far to search for existing actions.",
+      )
+      if show_scaf_help:
+        init_parser.print_help()
+        return
+      init_args = init_parser.parse_args(remaining)
+      return Init(**vars(init_args)).execute()
     if command == "version":
       return print(scaf.__version__)
     if command == "config":
@@ -65,12 +77,19 @@ def main(argv=None):
         return SetConfig(**set_config_kwargs).execute()
       raise ValueError(f"Unknown config subcommand: {subcommand!r}. Available: set")
     if command == "call":
-      call_kwargs = {}
-      try:
-        call_kwargs["action"] = remaining.pop(0)
-      except IndexError:
-        raise ValueError("No action specified. Usage: scaf call <path/to/action> [args...]")
-      return print_result(Call(**call_kwargs).execute(*remaining))
+      init_parser = argparse.ArgumentParser(
+        description="Call a domain action.",
+        prog="scaf call",
+      )
+      init_parser.add_argument("action", help="Path to the action to invoke.")
+      init_parser.add_argument(
+        "args", nargs=argparse.REMAINDER, help="Arguments to pass to the action."
+      )
+      if show_scaf_help:
+        init_parser.print_help()
+        return
+      init_args = init_parser.parse_args(remaining)
+      return print_result(Call(**vars(init_args)).execute())
     else:
       raise ValueError(f"Unknown command: {command}")
   except (ValueError, RuntimeError) as e:
