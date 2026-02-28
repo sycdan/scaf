@@ -15,6 +15,6 @@ def handle(command: SeedSettings) -> None:
   settings_path = command.domain_path / "settings.py"
 
   template = _TEMPLATE_PATH.read_text()
-  content = template + f"  {command.setting}: str = {repr(command.value)}\n"
+  content = template + f"\n  {command.setting}: str = {repr(command.value)}\n"
   settings_path.write_text(content)
   logger.info(f"Created {settings_path} with field '{command.setting}'")
