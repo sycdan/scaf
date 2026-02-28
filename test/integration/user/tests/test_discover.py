@@ -1,3 +1,4 @@
+import sys
 import uuid
 
 from test.integration.conftest import Sandbox
@@ -91,7 +92,8 @@ def test_discover_info_logs_raw_command_for_each_alias(sandbox: Sandbox):
   sandbox.scaf_init(0)
 
   # Run via subprocess with verbosity=2 so a fresh logging config captures info logs
-  result = sandbox.run("scaf", "--verbose", "--verbose", "discover", ".")
+  # Use sys.executable -m scaf to ensure the current env's scaf is used, not a system-installed one
+  result = sandbox.run(sys.executable, "-m", "scaf", "--verbose", "--verbose", "discover", ".")
 
   assert result.returncode == 0, (
     f"Expected discover to succeed\nstdout={result.stdout}\nstderr={result.stderr}"

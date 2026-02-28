@@ -32,6 +32,39 @@ Invoke an action (this will create it and add an alias, if it does not exist):
 scaf call example/world/greet
 ```
 
+## Dev Server
+
+Start the local dev server to run and test your domain actions from a browser UI:
+
+```bash
+scaf serve .
+```
+
+Then open [http://localhost:54545](http://localhost:54545).
+
+Select an action, enter a JSON payload, choose which tests to run and whether you expect each to pass or fail, then hit **Submit**. The server saves the payload as a fixture in the action's `fixtures/` folder and runs the selected tests in-process, returning live results. The server also hot-reloads any `.py` files under the deck as you edit them — no restart needed.
+
+Additionally, you can launch the server with debugpy via VSCode's `launch.json`:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug dev server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "scaf",
+      "args": [
+        "-vvv",
+        "serve",
+        "."
+      ]
+    }
+  ]
+}
+```
+
 ## Development
 
 Keep dependencies to a minimum.

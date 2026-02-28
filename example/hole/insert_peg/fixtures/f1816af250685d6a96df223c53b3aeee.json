@@ -1,0 +1,11 @@
+{
+  "payload": {
+    "peg": "4,4,4,4",
+    "hole": "3",
+    "force": true
+  },
+  "description": "large square peg in small round hole, with force",
+  "expectations": {
+    "test_peg_fits_in_hole": true
+  }
+}

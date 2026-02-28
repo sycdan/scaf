@@ -12,7 +12,14 @@ ACTION_DIR = Path(__file__).parent
 
 def handle(command: Test, *things):
   logger.debug(f"Handling {command=}")
-  pytest_args = ["--no-header", "--disable-warnings", "--tb=short", "-vvv", "-s"]
+  pytest_args = [
+    "--no-header",
+    "--disable-warnings",
+    "--tb=short",
+    "-vvv",
+    "-s",
+    "--import-mode=importlib",
+  ]
   if things:
     pytest_args += ["-k", " or ".join(things)]
 
@@ -23,5 +30,7 @@ def handle(command: Test, *things):
     logger.error(f"Error running tests: {e}")
     return command.Result(success=False)
 
-  logger.info("All tests passed")
-  return command.Result(success=True)
+  success = result == 0
+  if success:
+    logger.info("All tests passed")
+  return command.Result(success=success)

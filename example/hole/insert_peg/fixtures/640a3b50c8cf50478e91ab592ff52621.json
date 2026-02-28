@@ -1,0 +1,9 @@
+{
+  "payload": {
+    "peg": 1
+  },
+  "description": "missing hole definition",
+  "expectations": {
+    "test_peg_fits_in_hole": false
+  }
+}
