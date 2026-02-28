@@ -1,3 +1,4 @@
+import argparse
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -13,7 +14,11 @@ class Call(Shape):
     doc="Absolute path to the action, e.g. '/home/mbd53/cyberdyne/skynet/up'",
     metadata={"fitter": fit_action},
   )
-  args: list[str] = field(default_factory=list, doc="Arguments to pass to the action.")
+  args: list[str] = field(
+    default_factory=list,
+    doc="Arguments to pass to the action.",
+    metadata={"nargs": argparse.REMAINDER},
+  )
 
   def execute(self):
     from scaf.user.call.handler import handle

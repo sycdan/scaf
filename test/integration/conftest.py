@@ -94,7 +94,7 @@ class Sandbox:
     return success, stdout.getvalue(), stderr.getvalue()
 
   def scaf_init(self, search_depth: int = 0):
-    result = self.scaf("init", str(search_depth))
+    result = self.scaf("init", "--search-depth", str(search_depth))
     return result[0]
 
   def scaf_call(self, action: Path | str, *action_args):

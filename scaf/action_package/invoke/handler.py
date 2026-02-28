@@ -26,9 +26,17 @@ def build_parser_from_shape(shape_class: type, description: str):
     default = field.default
     help = field.doc or ""
 
+    custom_nargs = field.metadata.get("nargs", None)
+
     if default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING:
       # required positional
       parser.add_argument(name, type=fitter, help=help)
+    elif custom_nargs == argparse.REMAINDER:
+      # passthrough list: positional REMAINDER so all trailing tokens (including flags) are captured
+      effective_default = (
+        default if default is not dataclasses.MISSING else field.default_factory()
+      )  # type: ignore
+      parser.add_argument(name, nargs=argparse.REMAINDER, default=effective_default, help=help)
     else:
       # optional with default or default_factory
       flag_name = to_slug_case(name)
