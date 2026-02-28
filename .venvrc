@@ -1,5 +1,4 @@
-source .scaf/aliases
-alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'
+scaf discover . && source .scaf/aliases
 
 echo ""
 echo "git:"

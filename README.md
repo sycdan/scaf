@@ -23,9 +23,7 @@ scaf init
 Add this to your [`.venvrc`](#what-is-venvrc) or `.bashrc` file:
 
 ```bash
-# Load and display scaf aliases
-source .scaf/aliases
-alias | grep -P --color=always '^(alias \K[^=]+)(?=.+scaf )'
+scaf discover . && source .scaf/aliases
 ```
 
 Invoke an action (this will create it and add an alias, if it does not exist):
