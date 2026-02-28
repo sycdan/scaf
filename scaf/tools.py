@@ -1,5 +1,7 @@
 """May touch filesystem, but not DB or network."""
 
+import importlib.util
+import inspect
 import json
 import logging
 import re
@@ -139,6 +141,7 @@ def get_acceptable_types(field: Field):
 
 
 def get_fitter(for_class: type, field_name: str):
+  logger.debug(f"👋 {get_fitter.__name__} {for_class=} {field_name=}")
   try:
     fields = for_class.__dataclass_fields__
   except AttributeError:
@@ -151,7 +154,27 @@ def get_fitter(for_class: type, field_name: str):
     logger.warning(f"Failed to get fitter for {field_name}. Field not found in {for_class}.")
     return lambda x: x
 
+  # 1. Convention: fit_<field_name> in the sibling rules module
+  try:
+    class_file = inspect.getfile(for_class)
+    logger.debug(f"{class_file=}")
+    rules_file = Path(class_file).parent / "rules.py"
+    logger.debug(f"{rules_file=}")
+    if rules_file.exists():
+      spec = importlib.util.spec_from_file_location(rules_file.as_posix(), str(rules_file))
+      if spec and spec.loader:
+        rules_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(rules_mod)
+        if fn := getattr(rules_mod, f"fit_{field_name}", None):
+          if callable(fn):
+            logger.debug(f"Using {rules_file}::fit_{field_name} for {field_name}")
+            return fn
+  except (TypeError, OSError):
+    pass
+
+  # 2. Explicit fitter in field metadata
   if fitter := field.metadata.get("fitter", None):
+    logger.warning(f"Using deprecated metadata {fitter=} for {field_name=}")
     return fitter
 
   logger.debug(msg=f"No fitter defined for {field_name}; using simple type check")

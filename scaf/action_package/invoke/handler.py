@@ -5,32 +5,37 @@ import logging
 from pathlib import Path
 
 from scaf.action_package.invoke.command import InvokeActionPackage
+from scaf.errors import FittingError
 from scaf.tools import get_acceptable_types, get_fitter, to_slug_case
 
 logger = logging.getLogger(__name__)
 
 
 def build_parser_from_shape(shape_class: type, description: str):
-  logger.debug(
-    f"Building argparse parser from shape class {shape_class} with description: {description}"
-  )
+  logger.debug(f"👋 {build_parser_from_shape.__name__} {shape_class=} {description=}")
   parser = argparse.ArgumentParser(description=description)
 
   for field in dataclasses.fields(shape_class):
-    logger.debug(
-      f"Processing field {field.name} of type {field.type} with default {field.default}"
-    )
+    logger.debug(f"func={build_parser_from_shape.__name__} {field=}")
     name = field.name
     t, _, _ = get_acceptable_types(field)
-    fitter = get_fitter(shape_class, name)
+
+    def _fit(value, _name=name, _t=t):
+      logger.debug(f"Fitting {value=} to {_t} for field {shape_class}.{_name}")
+      fitter = get_fitter(shape_class, _name)
+      try:
+        return fitter(value)
+      except (ValueError, TypeError, RuntimeError) as e:
+        raise FittingError(f"{value!r} is not a valid value for '{_name}': {e}") from e
+
     default = field.default
-    help = field.doc or ""
+    help = field.doc or field.metadata.get("help", "")
 
     custom_nargs = field.metadata.get("nargs", None)
 
     if default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING:
       # required positional
-      parser.add_argument(name, type=fitter, help=help)
+      parser.add_argument(name, type=_fit, help=help)
     elif custom_nargs == argparse.REMAINDER:
       # passthrough list: positional REMAINDER so all trailing tokens (including flags) are captured
       effective_default = (
@@ -38,10 +43,10 @@ def build_parser_from_shape(shape_class: type, description: str):
       )  # type: ignore
       parser.add_argument(name, nargs=argparse.REMAINDER, default=effective_default, help=help)
     else:
-      # optional with default or default_factory
+      logger.debug(f"func={build_parser_from_shape.__name__} detected optional field {name=}")
       flag_name = to_slug_case(name)
       if t is bool:
-        # For bool fields, use the default or False if default_factory
+        logger.debug(f"func={build_parser_from_shape.__name__} detected {name}=bool")
         effective_default = default if default is not dataclasses.MISSING else False
         parser.add_argument(
           f"--{flag_name}", action="store_true", default=effective_default, dest=name, help=help
@@ -54,7 +59,7 @@ def build_parser_from_shape(shape_class: type, description: str):
           # default_factory exists, call it to get the default value
           effective_default = field.default_factory()  # type: ignore
         parser.add_argument(
-          f"--{flag_name}", type=fitter, default=effective_default, dest=name, help=help
+          f"--{flag_name}", type=_fit, default=effective_default, dest=name, help=help
         )
 
   return parser

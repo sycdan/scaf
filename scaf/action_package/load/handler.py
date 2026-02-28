@@ -1,5 +1,6 @@
 import importlib.util
 import logging
+import sys
 from pathlib import Path
 from types import ModuleType
 
@@ -25,6 +26,7 @@ def _load_module_from_file(file: Path, hash: str = "") -> ModuleType:
     raise RuntimeError(f"Could not load module from {file}")
 
   module = importlib.util.module_from_spec(spec)
+  sys.modules[module_name] = module
   spec.loader.exec_module(module)
   return module
 

@@ -1,5 +1,5 @@
+echo "aliases:"
 scaf discover . && source .scaf/aliases
-
 echo ""
 echo "git:"
 git remote -v
