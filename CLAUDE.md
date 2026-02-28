@@ -22,9 +22,10 @@ source dev/env.sh --nuke # Nuke and recreate environment (required after package
 ## Commands
 
 ```bash
-pytest                        # Run all tests
+pytest                        # Run all tests (includes example/ domain tests)
 pytest test/unit/             # Run unit tests only
 pytest test/integration/      # Run integration tests only
+pytest example/               # Run co-located domain action tests only
 pytest -k "test_name"         # Run a single test
 pytest -m "not integration"   # Skip integration tests
 
@@ -33,6 +34,7 @@ ruff format                   # Format
 ruff format --check           # Check formatting without modifying
 
 python -m scaf call <path>    # Run a domain action
+scaf serve .                  # Start local dev API server (browser UI at http://localhost:54545)
 ```
 
 The pre-push hook enforces: clean working tree, formatted/linted code (`ruff check && ruff format --check`), and passing tests (`pytest`).
@@ -65,7 +67,7 @@ Key naming conventions:
 The scaf package itself follows the same domain-action pattern:
 
 - `scaf/cli.py` — Entry point; routes `scaf init`, `scaf call`, `scaf version`
-- `scaf/user/` — User-facing commands: `init/`, `call/`, `discover/`
+- `scaf/user/` — User-facing commands: `init/`, `call/`, `discover/`, `serve/`
 - `scaf/action_package/` — Core machinery:
   - `load/` — Dynamically imports `command.py`/`query.py` + `handler.py` from a filesystem path
   - `invoke/` — Parses CLI args from dataclass fields and calls `handle()`
@@ -91,7 +93,84 @@ The scaf package itself follows the same domain-action pattern:
 
 All features must be built with TDD: write the integration test first (confirm it fails), then implement until it passes.
 
-Tests live in `test/unit/` and `test/integration/`. Integration tests use a sandbox fixture (temp directory). Regression tests for bugs go in `test/integration/bug/` with timestamp-based names. The `example/` directory contains test domain actions used by integration tests.
+Tests live in `test/unit/` and `test/integration/`. Integration tests use a sandbox fixture (temp directory). Regression tests for bugs go in `test/integration/bug/` with timestamp-based names. The `example/` directory contains test domain actions used by integration tests — these are also collected directly by `pytest` (see `pyproject.toml`: `testpaths` includes `example/`).
+
+### `scaf serve` and Co-located Tests
+
+`scaf serve <deck>` starts a lightweight HTTP dev server (default port 54545) with a browser UI for running domain action tests interactively. It is implemented in `scaf/user/serve/`.
+
+Action packages can have co-located tests following this convention:
+
+```
+<action>/
+  handler.py
+  command.py / query.py
+  conftest.py       ← pytest_generate_tests: parametrizes payload from fixture files
+  test_fixtures.py  ← test functions accepting `payload` fixture
+  fixtures/
+    <name>.json     ← named payload fixtures (2-space indent, uuid5 hex filename if auto-saved)
+```
+
+**Fixture format:**
+```json
+{
+  "payload": { "field": "value" },
+  "description": "human-readable scenario label",
+  "expectations": {
+    "test_foo": true,
+    "test_bar": false
+  }
+}
+```
+
+`expectations` maps test name → boolean. `false` causes conftest to apply `pytest.mark.xfail(strict=True)` when running under normal `pytest` (CI). This mark is **suppressed** when `SCAF_NO_XFAIL=1` is set (the server sets this during in-process runs so it measures raw outcomes).
+
+**conftest pattern** — always use `pytest_generate_tests`, NOT `@pytest.fixture(params=...)` (the latter evaluates at import time, which breaks in-process pytest runs and re-runs):
+
+```python
+import json, os
+from pathlib import Path
+import pytest
+
+def pytest_generate_tests(metafunc):
+    if "payload" not in metafunc.fixturenames:
+        return
+    d = Path(metafunc.definition.fspath).parent / "fixtures"
+    if name := os.environ.get("SCAF_FIXTURE"):
+        files = [d / name] if (d / name).exists() else []
+    elif d.exists():
+        files = sorted(d.glob("*.json"))
+    else:
+        files = []
+    if not files:
+        return
+    params = []
+    for f in files:
+        data = json.loads(Path(f).read_text())
+        test_name = metafunc.function.__name__
+        expected = data.get("expectations", {}).get(test_name, True)
+        marks = (
+            [pytest.mark.xfail(strict=True, reason=f"fixture expects {test_name} to fail")]
+            if expected is False and not os.environ.get("SCAF_NO_XFAIL")
+            else []
+        )
+        params.append(pytest.param(data["payload"], marks=marks, id=Path(f).stem))
+    metafunc.parametrize("payload", params)
+```
+
+**Server endpoints:**
+- `GET /` — browser UI (inline HTML, zero external deps)
+- `GET /actions` — list of all action paths in the deck
+- `GET /actions/<path>/tests` — list of test node IDs (AST-parsed from `test_fixtures.py`)
+- `POST /actions/<path>/run` — saves fixture, runs selected tests in-process, returns `{"results": [...]}`
+
+The server runs pytest in-process (`pytest.main()`) with `--import-mode=importlib`, `--override-ini` flags to avoid picking up the project's `pyproject.toml` config, and `-p no:capture` to avoid a Windows crash where nested in-process pytest calls fail with `ValueError: I/O operation on closed file` (pytest's `_windowsconsoleio_workaround` in `capture.py` corrupts `sys.stdin` on the outer run). `import pytest` is lazy (inside the handler) so `scaf serve` works even without pytest installed.
+
+**Subprocess tests must use `sys.executable, "-m", "scaf"` instead of just `"scaf"`** to avoid resolving to a system-installed version of scaf (e.g. older version at `%APPDATA%/Python/Scripts/scaf`) rather than the current dev editable install.
+
+`dev/test/handler.py` (used by the pre-push hook) runs pytest in-process with `--import-mode=importlib` and correctly returns `success = result == 0` based on pytest's exit code.
+
+Fixture filenames are deterministic: `uuid.uuid5(uuid.NAMESPACE_DNS, canonical_json).hex + ".json"` where `canonical_json = json.dumps(payload, separators=(",",":"), sort_keys=True)`.
 
 ## Code Style
 
