@@ -1,11 +1,17 @@
 from dataclasses import dataclass, field
 
 from example.thing.entity import Thing
+from scaf.core import Shape
 
 
 @dataclass
-class InsertPeg:
-  peg: Thing
-  hole: Thing
-  force_insert: bool = field(default=False, kw_only=True)
-  """Bug 202601270041: Added underscore fields to test slug-case CLI conversion"""
+class InsertPeg(Shape):
+  """Put the thing in the thing."""
+
+  peg: Thing = field(doc="The shape of the peg to insert.")
+  hole: Thing = field(doc="The shape of the hole to insert the peg into.")
+  force_insert: bool = field(
+    default=False,
+    kw_only=True,
+    doc="Push harder.",
+  )
