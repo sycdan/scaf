@@ -93,7 +93,7 @@ def test_discover_info_logs_raw_command_for_each_alias(sandbox: Sandbox):
 
   # Run via subprocess with verbosity=2 so a fresh logging config captures info logs
   # Use sys.executable -m scaf to ensure the current env's scaf is used, not a system-installed one
-  result = sandbox.run(sys.executable, "-m", "scaf", "--verbose", "--verbose", "discover", ".")
+  result = sandbox.run(sys.executable, "-m", "scaf", "-vv", "discover", ".")
 
   assert result.returncode == 0, (
     f"Expected discover to succeed\nstdout={result.stdout}\nstderr={result.stderr}"

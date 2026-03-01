@@ -22,7 +22,7 @@ def _discover_user_actions() -> list[Path]:
 def _print_help(actions: list[Path]) -> None:
   from scaf.action_package.load.command import LoadActionPackage
 
-  print("Usage: scaf [--verbose] <command> [args...]")
+  print("Usage: scaf [-v] <command> [args...]")
   print()
   print("Available commands:")
   for action in actions:
@@ -38,10 +38,10 @@ def main(argv=None):
   # Parse global flags only; leave everything else for action dispatch
   flag_parser = argparse.ArgumentParser(add_help=False, prog="scaf")
   flag_parser.add_argument(
-    "--verbose",
     "-v",
     action="count",
     default=0,
+    dest="verbose",
     help="Increase output verbosity (can be used multiple times).",
   )
   flag_args, remaining = flag_parser.parse_known_args(argv or sys.argv[1:])
