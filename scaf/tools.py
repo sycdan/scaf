@@ -169,7 +169,7 @@ def get_fitter(for_class: type, field_name: str):
           if callable(fn):
             logger.debug(f"Using {rules_file}::fit_{field_name} for {field_name}")
             return fn
-  except (TypeError, OSError):
+  except TypeError, OSError:
     pass
 
   # 2. Explicit fitter in field metadata

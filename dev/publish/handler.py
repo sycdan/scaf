@@ -33,6 +33,7 @@ def handle(command: Publish) -> dict:
 
   # Read package name from pyproject.toml
   import tomllib
+
   with open(root / "pyproject.toml", "rb") as f:
     pkg_name = tomllib.load(f)["project"]["name"]
 
@@ -42,6 +43,7 @@ def handle(command: Publish) -> dict:
 
     import importlib
     import scaf as _scaf
+
     importlib.reload(_scaf)
     version = str(Version(_scaf.__version__))  # normalize: "2026.03.01.0001" → "2026.3.1.1"
   except Exception:
