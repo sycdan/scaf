@@ -40,9 +40,10 @@ def handle(command: Publish) -> dict:
   try:
     from packaging.version import Version
 
-    import scaf
-
-    version = str(Version(scaf.__version__))  # normalize: "2026.03.01.0001" → "2026.3.1.1"
+    import importlib
+    import scaf as _scaf
+    importlib.reload(_scaf)
+    version = str(Version(_scaf.__version__))  # normalize: "2026.03.01.0001" → "2026.3.1.1"
   except Exception:
     pass
 
