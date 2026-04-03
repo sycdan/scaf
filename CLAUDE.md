@@ -76,8 +76,11 @@ The scaf package itself follows the same domain-action pattern:
 - `scaf/alias/` — Generates bash alias file (`.scaf/aliases`) for quick action invocation
 - `scaf/tools.py` — Naming utilities (snake/camel/slug conversion), dynamic module loading
 - `scaf/rules.py` — Field validation via "fitter" functions
+- `scaf/errors.py` — `FittingError` exception
 - `scaf/output.py` — Custom JSON encoder (handles dataclasses, Path, UUID, datetime); all action results go to stdout as JSON
 - `scaf/config/` — Constants, logging config (SCAF_VERBOSITY env var: 0=ERROR…3=DEBUG)
+- `scaf/shape/` — Defines `Shape` base dataclass (adds `values_must_fit()` validation and optional `prepare` hook)
+- `scaf/core/` — Re-exports `Shape` as the public import path (`from scaf.core import Shape`)
 
 ### Execution Flow
 
@@ -175,7 +178,7 @@ Fixture filenames are deterministic: `uuid.uuid5(uuid.NAMESPACE_DNS, canonical_j
 ## Code Style
 
 - 2-space indentation, 99-character line length (enforced by ruff)
-- Action input shapes are plain `@dataclass` classes — no ORM, no pydantic
+- Action input shapes are `@dataclass` classes that inherit from `Shape` (`from scaf.core import Shape`) — no ORM, no pydantic. `Shape` is a thin base dataclass that runs `values_must_fit()` on init and calls an optional `prepare()` method
 - `handle()` in `handler.py` is always the action entrypoint
 - Handlers may print to stderr (e.g. progress, warnings) but never to stdout — stdout is reserved for the JSON result emitted by `scaf/output.py`
 
