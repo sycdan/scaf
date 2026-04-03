@@ -17,7 +17,6 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "ruff", "vulture"]
-publish = ["build", "twine"]
 
 [project.scripts]
 scaf = "scaf.cli:main"
