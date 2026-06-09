@@ -1,4 +1,12 @@
-SCAF="$$(cd -- "$$(dirname -- "$${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+if [ -n "$${BASH_SOURCE:-}" ]; then
+  SELF="$${BASH_SOURCE[0]}"
+elif [ -n "$${ZSH_VERSION:-}" ]; then
+  SELF="$${(%):-%x}"
+else
+  echo "scaf: unsupported shell — bash and zsh only" >&2
+  return 1
+fi
+SCAF="$$(cd -- "$$(dirname -- "$$SELF")" >/dev/null 2>&1 && pwd)"
 DECK="$$(dirname -- "$$SCAF")"
 
 # Domain action aliases (run 'scaf discover' to update):
