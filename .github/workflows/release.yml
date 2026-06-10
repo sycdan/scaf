@@ -37,12 +37,16 @@ jobs:
           git config user.name "github-actions[bot]"
           VERSION="${{ steps.version.outputs.version }}"
           BUMP_COMMIT=$(git log -1 --format=%H -- scaf/__init__.py)
-          git tag -a "$VERSION" "$BUMP_COMMIT" -m "Release $VERSION"
-          git push origin "$VERSION"
-          gh release create "$VERSION" \
-            --title "$VERSION" \
-            --generate-notes \
-            --target "$BUMP_COMMIT"
+          if git rev-parse "$VERSION" > /dev/null 2>&1; then
+            echo "Tag $VERSION already exists, skipping tag/release creation"
+          else
+            git tag -a "$VERSION" "$BUMP_COMMIT" -m "Release $VERSION"
+            git push origin "$VERSION"
+            gh release create "$VERSION" \
+              --title "$VERSION" \
+              --generate-notes \
+              --target "$BUMP_COMMIT"
+          fi
 
       - name: Set up Python
         if: steps.version.outputs.version != ''
@@ -60,3 +64,5 @@ jobs:
       - name: Publish to PyPI
         if: steps.version.outputs.version != ''
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
