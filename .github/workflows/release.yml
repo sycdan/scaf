@@ -46,7 +46,7 @@ jobs:
           git config user.name "github-actions[bot]"
           VERSION="${{ steps.version.outputs.version }}"
           BUMP_COMMIT=$(git log -1 --format=%H -- scaf/__init__.py)
-          if git rev-parse "$VERSION" > /dev/null 2>&1; then
+          if git ls-remote --tags origin "refs/tags/$VERSION" | grep -q .; then
             echo "Tag $VERSION already exists, skipping tag/release creation"
           else
             git tag -a "$VERSION" "$BUMP_COMMIT" -m "Release $VERSION"
