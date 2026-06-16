@@ -169,8 +169,8 @@ def get_fitter(for_class: type, field_name: str):
           if callable(fn):
             logger.debug(f"Using {rules_file}::fit_{field_name} for {field_name}")
             return fn
-  except TypeError, OSError:
-    pass
+  except (TypeError, OSError) as e:
+    logger.debug(f"Failed to get fitter from rules module: {e}")
 
   # 2. Explicit fitter in field metadata
   if fitter := field.metadata.get("fitter", None):
