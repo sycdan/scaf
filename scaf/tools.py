@@ -189,7 +189,7 @@ def get_fitter(for_class: type, field_name: str):
         raise ValueError(f"{field_name} cannot be None")
 
     if not isinstance(domain_type, type):
-      logger.warning(f"Unable to infer domain type for {field_name}. Skipping fitting.")
+      logger.debug(f"Unable to infer domain type for {field_name}. Skipping fitting.")
       return value
 
     if origin_type := get_origin(domain_type):  # e.g. list[str]
