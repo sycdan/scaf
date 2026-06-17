@@ -87,6 +87,24 @@ def test_discover_prints_alias_names_in_red(sandbox: Sandbox):
     )
 
 
+def test_discover_reports_added_and_skips_existing_on_rerun(sandbox: Sandbox):
+  """Discover reports what it added; a second run finds nothing new and lists nothing."""
+  sandbox.add_example_domain()
+  sandbox.scaf_init(0)
+
+  success, _, stderr = sandbox.scaf("discover", ".")
+  assert success
+  assert "Added" in stderr, f"Expected discover to report added aliases\nstderr={stderr}"
+
+  # Second run: everything already aliased, so nothing new and no listing printed
+  success, _, stderr = sandbox.scaf("discover", ".")
+  assert success
+  assert "No new actions found." in stderr, f"Expected no-new report\nstderr={stderr}"
+  assert "example.myriad.get" not in stderr, (
+    f"Discover must not re-list existing aliases (that's `scaf show`)\nstderr={stderr}"
+  )
+
+
 def test_discover_info_logs_raw_command_for_each_alias(sandbox: Sandbox):
   sandbox.add_example_domain()
   sandbox.scaf_init(0)

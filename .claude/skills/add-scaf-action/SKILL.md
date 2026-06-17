@@ -65,7 +65,6 @@ def handle(query: Show):
   ensure_import_path(deck)  # from scaf.user.call.handler — adds deck root to sys.path
   ```
 - `deck.aliases_file`, `deck.root`, `deck.settings_file` are cached properties on `Deck`.
-- Parse the alias file read-only: `parse_all_aliases(deck.aliases_file, deck.root)` (`scaf/alias/tools.py`). Reuse `_print_alias_listing(aliases, deck.root)` from `scaf/user/discover/handler.py` to print `name  docstring` in red to stderr. `append_aliases` MUTATES — only use when intentionally writing.
 
 ## User-facing commands
 

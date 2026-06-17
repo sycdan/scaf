@@ -7,10 +7,10 @@ from scaf.action_package.load.command import LoadActionPackage
 from scaf.action_package.rules import must_contain_required_files
 from scaf.alias.entity import Alias
 from scaf.alias.tools import append_aliases, parse_all_aliases
-from scaf.output import NC, RED
 from scaf.tools import to_dot_path, to_slug_case
 from scaf.user.call.handler import ensure_import_path
 from scaf.user.discover.command import Discover
+from scaf.user.show.handler import _print_alias_listing
 
 logger = logging.getLogger(__name__)
 
@@ -106,25 +106,6 @@ def generate_action_aliases(root: Path, actions: list[Path], filter="") -> list[
   return aliases
 
 
-def _get_docstring(alias: Alias, root: Path) -> str:
-  """Load the action package for an alias and return the shape docstring."""
-  try:
-    ap = LoadActionPackage(root=root, action=alias.action).execute()
-    doc = (ap.shape_class.__doc__ or ap.shape_module.__doc__ or "").strip().splitlines()[0]
-    return doc
-  except Exception:
-    return ""
-
-
-def _print_alias_listing(aliases: list[Alias], root: Path) -> None:
-  """Print each alias name in red followed by its docstring to stderr."""
-  for alias in aliases:
-    doc = _get_docstring(alias, root)
-    raw_cmd = alias.to_bash()
-    logger.info("  %s", raw_cmd)
-    print(f"{RED}{alias.name}{NC}  {doc}", file=sys.stderr)
-
-
 def handle(command: Discover):
   deck = command.deck
   ensure_import_path(deck)
@@ -147,7 +128,10 @@ def handle(command: Discover):
   new_aliases = [a for a in discovered_aliases if a.action not in existing_actions]
   append_aliases(aliases_file, new_aliases)
 
-  # Re-parse the full file so the listing reflects renames by the user
-  all_aliases = parse_all_aliases(aliases_file, deck.root)
-  _print_alias_listing(all_aliases, deck.root)
+  # Report what was added; leave the full listing to `scaf show`.
+  if new_aliases:
+    print(f"Added {len(new_aliases)} alias(es):", file=sys.stderr)
+    _print_alias_listing(new_aliases, deck.root)
+  else:
+    print("No new actions found.", file=sys.stderr)
   sys.exit(0)
