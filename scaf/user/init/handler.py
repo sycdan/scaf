@@ -68,9 +68,9 @@ def handle(command: Init):
     "💡 To activate aliases, add this to your shell/venv RC file:",
     "```bash",
     "# Load and display scaf aliases",
-    f"scaf discover . && source {alias_file.relative_to(root).as_posix()}",
+    f"source {alias_file.relative_to(root).as_posix()} && scaf show",
     "```",
-    "ℹ️  After creating an action, remember to refresh your environment to pick up the new alias.",
+    "ℹ️  After creating an action, run `scaf discover .` then refresh your environment to pick up the new alias.",
   ]
   print_success("\n".join(lines))
   sys.exit(0)
